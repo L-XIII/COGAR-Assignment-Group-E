@@ -2,8 +2,9 @@ import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Point
 
-import OrchestrationManager
+
 import PerceptionSystem
+import OrderVerificationSystem
 
 
 class TIAGo():
@@ -32,6 +33,7 @@ class TIAGo():
 
         #Generation of the different modules of the TIAGo platform
         self.perception_system  = PerceptionSystem(self)
+        self.order_verificatiion_system = OrderVerificationSystem(self)
 
         #Generation of the map of the restaurant
         self.generation_map()

@@ -77,8 +77,23 @@ class PerceptionSystem():
             #Grasping phase, we use the perception system for reasoning about the food placement and 
             self.perception_for_grasping_and_placement()
             return localization
+    
+    def verification_of_grasping_and_placement(self, operation):
+        """
+        - The parameter of the method "operation" indicates of which kind of operation we want to check the sucess
+        - If it is a "placement" operation : there are 80% chance of success and the method returns "True" if the operation is a success and "False" if not
+        - If it is a "grasping" operation : there are 90% chance of success and the method returns "True" if the operation is a success and "False" if not
+        - If the type of the operation is nether "placement" nor grasping, it returns "Target unknown"
+        """
+        
+        if operation == "placement":
+            placement = self.bernouilli_proba(80)
+            return placement
+        elif operation == "grasping":
+            grasping_succesful = self.bernouilli_proba(90)
+            return grasping_succesful
 
-        
-        
+        else:
+            return "Target unknown"
     
    
