@@ -4,7 +4,6 @@ import rospy
 import random
 import numpy.random as nrd
 
-import TIAGo
 
 
 def bernoulli_proba(percentage):

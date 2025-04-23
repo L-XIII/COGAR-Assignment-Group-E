@@ -66,7 +66,6 @@ class OrchestrationManager():
         #Generation of the map of the restaurant
         self.generation_map()
         #Subsrciption to the ROS topic "orders"
-        rospy.init_node("OrchestrationManager")
 
         #Creation of the order_TIAGo publisher
         self.publisher_order = rospy.Publisher("order_TIAGo", String, queue_size=10)
@@ -265,6 +264,12 @@ class OrchestrationManager():
 
 
 if __name__ == '__main__':
-    orchestrationManager = OrchestrationManager()
-
-    orchestrationManager.orchestration()#Simulation of the restaurant
+    # Remove rospy.init_node call from the global scope
+    try:
+        rospy.init_node("OrchestrationManager", anonymous=True)
+        orchestrationManager = OrchestrationManager()
+        orchestrationManager.orchestration()
+    except rospy.exceptions.ROSInitException:
+        print("WARNING: ROS node already initialized. Running in non-ROS mode.")
+        orchestrationManager = OrchestrationManager()
+        orchestrationManager.orchestration()

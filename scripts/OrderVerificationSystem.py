@@ -1,30 +1,20 @@
 #!/usr/bin/env python
 
-import SpeechInterface
+from SpeechInterface import SpeechInterface
 
-
-
-class OrderVerificationSystem():        
-    """"
+class OrderVerificationSystem:
+    """
     An instance of OrderVerificationSystem enables the TIAGo robot which it is part of to check if the orders have been well executed
     It takes as parameters:
     - tiago : the TIAGo robot the instance is part of
     - speech_interface : the speech interface of the robot
     """
 
-    def __new__(cls): 
-        """
-        Check if there is already an instance of the OrderVerificationSystem class, if there isn't, create it
-        """
-        if not hasattr(cls, 'instance'):
-            cls._instance = super(OrderVerificationSystem, cls).__new__(cls)
-            cls._instance.__init__()
-        return cls._instance
-
-    def __init__(self, tiago):
-        self.tiago = tiago
+    def __init__(self, tiago_platform):
+        self.tiago = tiago_platform
+        self.order_phase = 0
+        self.dish = None
         self.speech_interface = SpeechInterface()
-        pass
     
     def verify_grasping(self):
         """

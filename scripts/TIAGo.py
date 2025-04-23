@@ -4,9 +4,8 @@ import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Point
 
-
-import PerceptionSystem
-import OrderVerificationSystem
+from PerceptionSystem import PerceptionSystem
+from OrderVerificationSystem import OrderVerificationSystem
 
 
 class TIAGo():
@@ -25,6 +24,11 @@ class TIAGo():
         - dish : dish to bring to the target table (parameter set to "clearing" if the robot has to perform a clearing operation)
         
         """
+        try:
+            rospy.init_node('TIAGo', anonymous=True)
+        except rospy.exceptions.ROSInitException:
+            rospy.logwarn("ROS node already initialized. Using existing node.")
+            
         # Get the 'frequency' parameter from the roslaunch file, default to 0 if not set
         frequency = rospy.get_param('~frequency', 0)
         # Get the robot ID from the 'tiago_id' parameter set in the launch file
@@ -36,23 +40,21 @@ class TIAGo():
         self.target_table = None
         self.dish = None 
 
-        #Generation of the different modules of the TIAGo platform
-        self.perception_system  = PerceptionSystem(self)
-        self.order_verificatiion_system = OrderVerificationSystem(self)
-
-        #Generation of the map of the restaurant
+        # Generation of the map of the restaurant
         self.generation_map()
-
-        rospy.init_node('TIAGo', anonymous=True) #ROS node of the TIAGo robot
-	
-        #Creation of the availability publisher that will publish String messages to the 'availability' topic
+                
+        # Generation of the different modules of the TIAGo platform
+        self.perception_system = PerceptionSystem(self)
+        self.order_verificatiion_system = OrderVerificationSystem(self)
+        
+        # Creation of the availability publisher that will publish String messages to the 'availability' topic
         self.publisher_availability = rospy.Publisher('availability', String, queue_size=10)
         
-        #Creation of a publisher that will publish Point (position) messages to the 'position' topic
+        #Creatio of a pblisherthat will publish Point (position) messages to the 'position' topic
         self.publisher_position = rospy.Publisher('position', Point, queue_size=10)
         
-        #Creation of a publisher that will publish String messages to the 'orders' topic
-        #(To notofy the orchestration manager that there are table to be cleaned)
+        #Creatio of a pblisherthat wil publis Stringmessages to the 'orders' topic
+        #(To notfy the rchestrtion maager tht thereare table to be cleaned)
         self.publisher_clearing_order = rospy.Publisher('orders', Point, queue_size=10)
 
         self.rate = rospy.Rate(10) # 10Hz
@@ -115,7 +117,7 @@ class TIAGo():
 
         return None
     
-    def goto(self,location):
+    def go_to(self,location):
         pass
 
     def operation(self):
@@ -169,7 +171,7 @@ class TIAGo():
 
 
         else:
-            self.go_to(self.service_area)
+            self.go_to(self.service_area_coords)
 
         return None
     
