@@ -1,0 +1,8 @@
+prefix=/home/blp/Documents/Projet/devel
+
+Name: group_E
+Description: Description of group_E
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

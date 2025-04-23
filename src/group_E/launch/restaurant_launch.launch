@@ -1,0 +1,57 @@
+<launch>
+  <!-- Start the Orchestration Manager node-->
+  <node name="OrchestrationManager" pkg="group_E" type="orchestrationManager.py" output="screen">
+  </node>  
+  
+  <!-- Start the first "TIAGo robot" node-->
+  <node name="TIAGo" pkg="group_E" type="TIAGo.py" output="screen">
+    <!-- We pass in parameter the ID of the robot -->
+    <param name="tiago_id" value="1" />
+  </node>
+  
+  
+  <!-- Start the second "TIAGo robot" node-->
+  <node name="TIAGo" pkg="group_E" type="TIAGo.py" output="screen">
+    <!-- We pass in parameter the ID of the robot -->
+    <param name="tiago_id" value="2" />
+  </node>
+  
+  <!-- Start the third "TIAGo robot" node-->
+  <node name="TIAGo" pkg="group_E" type="TIAGo.py" output="screen">
+    <!-- We pass in parameter the ID of the robot -->
+    <param name="tiago_id" value="3" />
+  </node>
+  
+  <!-- Start the fourth "TIAGo robot" node-->
+  <node name="TIAGo" pkg="group_E" type="TIAGo.py" output="screen">
+    <!-- We pass in parameter the ID of the robot -->
+    <param name="tiago_id" value="4" />
+  </node>
+  
+  <!-- Start the fifth "TIAGo robot" node-->
+  <node name="TIAGo" pkg="group_E" type="TIAGo.py" output="screen">
+    <!-- We pass in parameter the ID of the robot -->
+    <param name="tiago_id" value="5" />
+  </node>
+
+  <!-- Start the first "Point of sale" node -->
+  <node name="POS" pkg="group_E" type="PointOfSale.py" output="screen">
+  </node>
+  
+  <!-- Start the first "Point of sale" node -->
+  <node name="POS" pkg="group_E" type="PointOfSale.py" output="screen">
+  </node>
+  
+  <!-- Start the first "Point of sale" node -->
+  <node name="POS" pkg="group_E" type="PointOfSale.py" output="screen">
+  </node>
+  
+  <!-- Start the second "Point of sale" node -->
+  <node name="POS" pkg="group_E" type="PointOfSale.py" output="screen">
+  </node>
+  
+  <!-- Start the third "Point of sale" node -->
+  <node name="POS" pkg="group_E" type="PointOfSale.py" output="screen">
+  </node>
+
+</launch>
