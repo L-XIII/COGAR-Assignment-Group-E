@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #Libraries
 import math
 import time 
@@ -253,7 +255,7 @@ class OrchestrationManager():
             #Updating the availability of the robots and their position
             rospy.Subscriber("available", String, self.manage_availability)
             rospy.Subscriber("position", Point, self.manage_position)
-     
+
             while self.dictTIAGoAvailable != {}:#while there is still an available robot, we give it an order
                 self.assign_order()
 

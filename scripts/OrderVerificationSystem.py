@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import SpeechInterface
 
 
@@ -20,9 +22,9 @@ class OrderVerificationSystem():
         return cls._instance
 
     def __init__(self, tiago):
-       self.tiago = tiago
-       self.speech_interface = SpeechInterface()
-       pass
+        self.tiago = tiago
+        self.speech_interface = SpeechInterface()
+        pass
     
     def verify_grasping(self):
         """
@@ -54,4 +56,3 @@ class OrderVerificationSystem():
             return None
         else:
             return problem
-        

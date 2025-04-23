@@ -56,4 +56,3 @@ if __name__ == '__main__':
         pos.order_emission(nb_loops)
         nb_loops+=1
     pos.shutdown()
-

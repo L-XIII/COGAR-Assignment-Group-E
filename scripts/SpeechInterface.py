@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import random
 
 from PerceptionSystem import bernoulli_proba
@@ -7,8 +9,8 @@ class SpeechInterface():
     An instance of the class SpeechInterface is used to communicate with the client using speakers and microphones
     """
     def __init__(self):
-       pass
-       
+        pass
+
     def serving_sentences(self):
         """
         - The robot says to the customer that his command is here
@@ -51,7 +53,3 @@ class SpeechInterface():
         if nature == 3:
             print("That is not to criticize the food ore something, no, I just a question/request...")
             return "question_or_request"
-
-        
-        
-
