@@ -19,17 +19,27 @@ import TIAGo
 #We localize the different areas (tables, serving area,...) by their top left corner and their length and width
 #We use the singleton pattern for the OrchestrationManager class because we want only one object of this kind
 
+
 class OrchestrationManager():
     """
     The Orchestration Manager manages the order processing and repartition
+    The class OrchestrationManager has one parameter:
+    - list_dishes : list of dishes the restaurant serves
     An OrchestrationManager instance has several parameters:
     - orderQueue : list in which the orders are stored in a specific order
     - listPOS : list of the point of sales of the restaurant 
     - orderQueue : list where the orders are stored
     - ongoingQueue : list where the ongoing tasks permformed by the robots are stored
-    - dictTIAGoAvailable : store the identifiers of the TIAGo robots and their availability
-    - dictTIAGoPosition : store the identifiers and the positions of the TIAGo robots
+    - dictTIAGoAvailable : stores the identifiers of the TIAGo robots and their availability
+    - dictTIAGoPosition : stores the identifiers and the positions of the TIAGo robots
+    - error_occured : counts how many errors occurred and have not been transmitted to the staff
+    - error_messages : stores the error_messages to be transmitted to the staff
+    - publisher_order : publisher that send orders to the TIAGo robots
+    - publisher_error : publisher that send the error message to the staff
     """
+
+    list_dishes = ["Nare","Oshi","Nigri","Gunkan","Maki","Futo","Temaki","Inari","Temari","Sashimi","Uramaki"]
+    
     def __new__(cls): 
         """
         The new method a method used to create a new instance of a class.
@@ -44,13 +54,13 @@ class OrchestrationManager():
         """
         Method called for initializing the OrchestrationManager. 
         - It generates the map of the restaurant
-        - It sub 
         """
         self.orderQueue = []
         self.ongoingTasks = []
-        self.listPOS = []
         self.dictTIAGoAvailable = {}
         self.dictTIAGoPosition = {}
+        self.error_occured = 0
+        self.error_messages = []
         #Generation of the map of the restaurant
         self.generation_map()
         #Subsrciption to the ROS topic "orders"
@@ -59,25 +69,11 @@ class OrchestrationManager():
         #Creation of the order_TIAGo publisher
         self.publisher_order = rospy.Publisher("order_TIAGo", String, queue_size=10)
 
+        #Creation of the publisher that will notify the staff of potential errors
+        self.publisher_error = rospy.Publisher("error_messages", String, queue_size=10)
 
-    def addTIAGo(self, TIAGo_instance):
-        """
-        This method add the object TIAGo_instance into the list self.listTIAGo if it isn't already inside
-        """
-        if TIAGo_instance not in self.listTIAGo:
-            self.listTIAGo.append(TIAGo_instance)
-            #ROS subscription to the channel of the robot
-            #TIAGo_instance.addOrchestrationManager(self)#The TIAGo robot has to subscribe to the ROS topics of the OrchestrationManager
 
-    def addPOS(self, POS_instance):
-        """
-        This method add the object TIAGo_instance into the list self.listTIAGo if it isn't already inside
-        """
-        if POS_instance not in self.listTIAGo:
-            self.listTIAGo.append(POS_instance)
-            #ROS subscription to the channel of the POS
-
-    def generation_map(self):#
+    def generation_map(self):
         """
         Generate the map of the restaurant
         """
@@ -92,6 +88,9 @@ class OrchestrationManager():
         return None
     
     def extraxtion_data(self, msg):
+        """
+        This function extract the datas of the received order 
+        """
         index_order = 7 #We skip the "Table : " part of the message
 
         #Extraction of the table number
@@ -108,7 +107,7 @@ class OrchestrationManager():
         #Extraction of the dish name
         index_order += 1 
         index_order_beginning_dish = index_order
-        dish = msg.data[index_order]
+        dish = msg.data[index_order]       
         while msg.data[index_order] != " ":
             dish = msg.data[index_order_beginning_dish:index_order+1]
             index_order+=1
@@ -116,19 +115,36 @@ class OrchestrationManager():
         #Extraction of the priority
         priority = int(msg.data[-1])
 
-        return table_number, dish, priority
+        return table_number, dish, priority, msg.data
     
     def order_storing(self, msg):
         """
-        Store the orders in the queue:
+        If the dish, the table number or the priority do not correspond to legit values, it increases the number of errors to be transmitted to the staff 
+        and append the corresponding erro message to the liset error_messages
+        Store the orders in the queue if it is a dish with known name, table_number and priority:
         - At the beginning of the queue if it is a cleaning order (priority 2)
         - At the middle of the queue if it is a priority order (priority 1)
         - At the end of the queue if it is a normal order
         """
         rospy.loginfo("Message received by the orchetration manager : %s", msg.data)
-        table_number, dish, priority = self.extraction_data(msg)
+        table_number, dish, priority, message = self.extraction_data(msg)
         
         order_data = [table_number, dish]
+
+        if dish not in OrchestrationManager.list_dish:
+            self.error_occured+=1
+            self.error_messages.append(message + " , Problem : Unknown dish")
+            return None
+        
+        if table_number not in range(1, 61,1):
+            self.error_occured+=1
+            self.error_messages.append(message + " , Problem : Unknown table number")
+            return None
+        
+        if table_number not in range(0, 3,1):
+            self.error_occured+=1
+            self.error_messages.append(message + " , Problem : Unknown priority")
+            return None
 
         if priority == 2:#It is a cleaning order, it takes precendence over the other orders
             self.orderQueue.insert(0, order_data)
@@ -200,6 +216,20 @@ class OrchestrationManager():
         self.publisher_order.publish(order_msg)
 
         return None
+    
+    def send_error_messages(self):
+        """
+        While there is unpublished error messages, it publishs them and then decreases the counter of unpublished numbers and 
+        remove the error message from the list of unpublished error_message
+        """
+        while self.error_occured != 0:
+            error_msg = self.error_messages[0]
+            rospy.loginfo(error_msg)
+            self.publisher_order.publish(error_msg)
+            del self.error_messages[0]#Remove the error message from the list
+            self.error_occured -= 1
+
+
 
     def orchestration(self):
         """
