@@ -1,2 +1,0 @@
-group_E
--DCATKIN_DEVEL_PREFIX=/home/blp/Documents/Projet/devel -DCMAKE_INSTALL_PREFIX=/home/blp/Documents/Projet/install -G Unix Makefiles
