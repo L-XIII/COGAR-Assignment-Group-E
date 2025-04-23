@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Point
@@ -24,8 +26,9 @@ class TIAGo():
         
         """
         # Get the 'frequency' parameter from the roslaunch file, default to 0 if not set
-    	frequency = rospy.get_param('~frequency', 0)
-        self.id = 
+        frequency = rospy.get_param('~frequency', 0)
+        # Get the robot ID from the 'tiago_id' parameter set in the launch file
+        self.id = rospy.get_param('~tiago_id', 1)
         self.x = 0
         self.y = 0
         self.status = "available"
@@ -40,7 +43,7 @@ class TIAGo():
         #Generation of the map of the restaurant
         self.generation_map()
 
-	rospy.init_node('TIAGo', anonymous=True) #ROS node of the TIAGo robot
+        rospy.init_node('TIAGo', anonymous=True) #ROS node of the TIAGo robot
 	
         #Creation of the availability publisher that will publish String messages to the 'availability' topic
         self.publisher_availability = rospy.Publisher('availability', String, queue_size=10)
@@ -143,7 +146,7 @@ class TIAGo():
                 pass
 
         if self.status == "occupied" and self.dish == "clearing":
-             #The TIAGo robot are not doing a clearing operation
+            #The TIAGo robot are not doing a clearing operation
             if self.order_phase ==  1 :
                 #Entering phase 1 : the TIAGo robot has to go to the table where is located the empty plate it has to remove
                 pass
