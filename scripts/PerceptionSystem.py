@@ -56,11 +56,11 @@ class PerceptionSystem():
             #Serving operation
             if self.order_phase == 2: 
                 #Phase 2 of the serving order : the TIAGo Robot has to take the required_plate - 80% chance to locate the plate
-                plate_located = bernouilli_proba(99)
+                plate_located = bernoulli_proba(99)
                 return plate_located
             else:
                 #Phase 4 of the serving order : the TIAGo Robot has put down the empty plate - 70% chance to locate a free spot on the table
-                free_spot_located = bernouilli_proba(99)
+                free_spot_located = bernoulli_proba(99)
                 return free_spot_located
     
     def perception(self):
@@ -90,10 +90,10 @@ class PerceptionSystem():
         """
         
         if operation == "placement":
-            placement = bernouilli_proba(80)
+            placement = bernoulli_proba(80)
             return placement
         elif operation == "grasping":
-            grasping_succesful = bernouilli_proba(90)
+            grasping_succesful = bernoulli_proba(90)
             return grasping_succesful
 
         else:
