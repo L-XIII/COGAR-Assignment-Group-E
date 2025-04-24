@@ -63,6 +63,7 @@ class OrchestrationManager():
         self.dictTIAGoPosition = {}
         self.error_occured = 0
         self.error_messages = []
+        self.last_order_message = None
         #Generation of the map of the restaurant
         self.generation_map()
         #Subsrciption to the ROS topic "orders"
@@ -73,6 +74,9 @@ class OrchestrationManager():
         #Creation of the publisher that will notify the staff of potential errors
         self.publisher_error = rospy.Publisher("error_messages", String, queue_size=10)
 
+        rospy.Subscriber("orders", String, self.order_storing)
+        rospy.Subscriber("availability", String, self.manage_availability)
+        rospy.Subscriber("position", Point, self.manage_position)
 
     def generation_map(self):
         """
@@ -88,7 +92,7 @@ class OrchestrationManager():
             self.table_coords[i+1]=[unit_digit*3,decade_digit*4,2,1]
         return None
     
-    def extraxtion_data(self, msg):
+    def extraction_data(self, msg):
         """
         This function extract the datas of the received order 
         """
@@ -98,9 +102,13 @@ class OrchestrationManager():
         index_order = 8 
         table_number = msg.data[8]
 
-        if msg.data[9] != " ":#if the 10th character of the message is not a space character, it means that the table number has two digits
-            table_number = msg.data[8:10]#We extract the table number
+        if msg.data[9] != " " and msg.data[9] != ",":  # Check for space OR comma
+            # If the next character is not space or comma, it's part of the table number
+            table_number = msg.data[8:10]
             index_order = 9 
+        
+        # Remove any non-digit characters (like commas)
+        table_number = ''.join(c for c in table_number if c.isdigit())
         table_number = int(table_number)
 
         index_order += 9 #We skip the ", dish : " part of the message
@@ -119,20 +127,16 @@ class OrchestrationManager():
         return table_number, dish, priority, msg.data
     
     def order_storing(self, msg):
-        """
-        If the dish, the table number or the priority do not correspond to legit values, it increases the number of errors to be transmitted to the staff 
-        and append the corresponding erro message to the liset error_messages
-        Store the orders in the queue if it is a dish with known name, table_number and priority:
-        - At the beginning of the queue if it is a cleaning order (priority 2)
-        - At the middle of the queue if it is a priority order (priority 1)
-        - At the end of the queue if it is a normal order
-        """
+        # Avoid duplicate logging/processing if the same message was just received
+        if self.last_order_message == msg.data:
+            return None
+        self.last_order_message = msg.data
         rospy.loginfo("Message received by the orchetration manager : %s", msg.data)
         table_number, dish, priority, message = self.extraction_data(msg)
         
         order_data = [table_number, dish]
 
-        if dish not in OrchestrationManager.list_dish:
+        if dish not in OrchestrationManager.list_dishes:
             self.error_occured+=1
             self.error_messages.append(message + " , Problem : Unknown dish")
             return None
@@ -165,7 +169,7 @@ class OrchestrationManager():
         tiago_id = int(msg.data[6])
         tiago_availabiliy = msg.data[10:]
 
-        self.dictTIAGoPosition[tiago_id] = tiago_availabiliy
+        self.dictTIAGoAvailable[tiago_id] = tiago_availabiliy
 
         return None
 
@@ -194,25 +198,27 @@ class OrchestrationManager():
         distance = math.sqrt((tiago_x-table_x)**2+(tiago_y-table_y)**2)
         return distance
     
-    def assign_order(self, tiago):
+    def assign_order(self):
         """
-        Method that takes the first order of the order queue and send it to the nearest available robot
-        Exemple of message sent : "TIAGo n°3, table : 37, dish : Gunkan" 
+        Method that takes the first order of the order queue and sends it to the nearest available robot.
+        Example of message sent: "TIAGo n°3, table : 37, dish : Gunkan"
         """
-
+        if not self.orderQueue:
+            rospy.logwarn("No orders available to assign")
+            return None
         order_data = self.orderQueue[0]
         table_number, dish = order_data[0], order_data[1]
 
         tiago_id = 0
-        distance_min = 1000 #Distance greater than the greatest distance possible to travel in the restaurant
+        distance_min = 1000  # Distance greater than the maximum possible in the restaurant
 
         for tiago_id_available in self.dictTIAGoAvailable.keys():
-            distance = self.compute_distance()
-            if distance<distance_min:
+            distance = self.compute_distance(table_number, tiago_id_available)
+            if distance < distance_min:
                 tiago_id = tiago_id_available
                 distance_min = distance
 
-        order_msg = "TIAGo n°" + tiago_id + ", table : " + str(table_number) + ", dish : ", dish 
+        order_msg = "TIAGo n°" + str(tiago_id) + ", table : " + str(table_number) + ", dish : " + dish
         rospy.loginfo("Order sent by the orchestration manager : " + order_msg)
         self.publisher_order.publish(order_msg)
 
@@ -235,32 +241,19 @@ class OrchestrationManager():
     def orchestration(self):
         """
         Method that manages the restaurant work until the ROS node "Manager" of the Manager is shutdown.
-        - We check if there is a new order received
-        - If that is the case, we store the order to the orderQueue list taking into account its priority
-        - We check if there is an available robot
-        - In that case we give it a new order
-        - We increase the counter of turns if one second has passed
         """
-
         nb_turns = 0 
         t = time.time()
 
-        #While the number of turns (one turn = 1s) is inferior to 2000 and there are still ongoing tasks and tasks in the queue   
-        while (nb_turns<2000) and (len(self.ongoingTasks)==0) and (len(self.orderQueue)==0): 
-
-            #Updating the order list
-            rospy.Subscriber("orders", String, self.order_storing)
-
-            #Updating the availability of the robots and their position
-            rospy.Subscriber("available", String, self.manage_availability)
-            rospy.Subscriber("position", Point, self.manage_position)
-
-            while self.dictTIAGoAvailable != {}:#while there is still an available robot, we give it an order
+        while (nb_turns < 2000) and (len(self.ongoingTasks)==0):
+            # Only assign an order if there are orders in the queue and available robots
+            if self.orderQueue and self.dictTIAGoAvailable:
                 self.assign_order()
-
-            if time.time()-t>1:
+            if time.time()-t > 1:
                 t = time.time()
-                nb_turns+=1
+                nb_turns += 1
+            rospy.sleep(0.1)
+            
 
 
 if __name__ == '__main__':
