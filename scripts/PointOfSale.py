@@ -33,7 +33,7 @@ class POS():
         Example : "Table : 42, dish : Gunkan, loop n°1214, priority : 1"
 
         """
-        emission_possible = random.randint(1,200)
+        emission_possible = random.randint(1,50)
         if emission_possible<=3:
             dish = random.choice(POS.list_dishes) #Choose a random dish
             table_number = random.randint(1,60) #Choose a random table
