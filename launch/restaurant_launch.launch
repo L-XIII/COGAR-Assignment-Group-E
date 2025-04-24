@@ -3,54 +3,24 @@
   <node name="OrchestrationManager" pkg="group_e" type="OrchestrationManager.py" output="screen">
   </node>  
   
-  <!-- Start the first "TIAGo robot" node-->
+  <!-- Start the five TIAGo robot nodes -->
   <node name="TIAGo_1" pkg="group_e" type="TIAGo.py" output="screen">
-    <!-- We pass in parameter the ID of the robot -->
     <param name="tiago_id" value="1" />
   </node>
-  
-  <!-- Start the second "TIAGo robot" node-->
   <node name="TIAGo_2" pkg="group_e" type="TIAGo.py" output="screen">
-    <!-- We pass in parameter the ID of the robot -->
     <param name="tiago_id" value="2" />
   </node>
-  
-  <!-- Start the third "TIAGo robot" node-->
   <node name="TIAGo_3" pkg="group_e" type="TIAGo.py" output="screen">
-    <!-- We pass in parameter the ID of the robot -->
     <param name="tiago_id" value="3" />
   </node>
-  
-  <!-- Start the fourth "TIAGo robot" node-->
   <node name="TIAGo_4" pkg="group_e" type="TIAGo.py" output="screen">
-    <!-- We pass in parameter the ID of the robot -->
     <param name="tiago_id" value="4" />
   </node>
-  
-  <!-- Start the fifth "TIAGo robot" node-->
   <node name="TIAGo_5" pkg="group_e" type="TIAGo.py" output="screen">
-    <!-- We pass in parameter the ID of the robot -->
     <param name="tiago_id" value="5" />
   </node>
 
-  <!-- Start the first "Point of sale" node -->
+  <!-- Start the Point of Sale node -->
   <node name="POS_1" pkg="group_e" type="PointOfSale.py" output="screen">
   </node>
-  
-  <!-- Start the second "Point of sale" node -->
-  <node name="POS_2" pkg="group_e" type="PointOfSale.py" output="screen">
-  </node>
-  
-  <!-- Start the third "Point of sale" node -->
-  <node name="POS_3" pkg="group_e" type="PointOfSale.py" output="screen">
-  </node>
-  
-  <!-- Start the fourth "Point of sale" node -->
-  <node name="POS_4" pkg="group_e" type="PointOfSale.py" output="screen">
-  </node>
-  
-  <!-- Start the fifth "Point of sale" node -->
-  <node name="POS_5" pkg="group_e" type="PointOfSale.py" output="screen">
-  </node>
-
 </launch>
