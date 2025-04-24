@@ -162,26 +162,36 @@ class OrchestrationManager():
 
         return None
     
-    def manage_availability(self,msg):
+    def manage_availability(self, msg):
         """
-        Store the id and the availability of the tiago in the dictionnary dictTIAGoAvailability
+        Store the id and availability of the TIAGo robot and log the received message.
         """
-        tiago_id = int(msg.data[6])
-        tiago_availabiliy = msg.data[10:]
-
+        parts = msg.data.split(' : ')
+        if len(parts) != 2:
+            rospy.logerr(f"Invalid availability message format: {msg.data}")
+            return None
+        id_part = parts[0].split(' ')
+        if len(id_part) != 2 or not id_part[1].isdigit():
+            rospy.logerr(f"Invalid TIAGo ID format in availability message: {parts[0]}")
+            return None
+        tiago_id = int(id_part[1])
+        tiago_availabiliy = parts[1].strip()
+        if rospy.get_param("~debug", False):
+            rospy.loginfo(f"Received availability from TIAGo {tiago_id}: {tiago_availabiliy}")
         self.dictTIAGoAvailable[tiago_id] = tiago_availabiliy
 
         return None
 
-    def manage_position(self,msg):
+    def manage_position(self, msg):
         """
-        Store the id and the position of the tiago in the dictionnary dictTIAGoPosition
+        Store the id and the position of the TIAGo robot and log the received message.
         """
-        tiago_id = msg.z
+        tiago_id = int(msg.z)  # Ensure TIAGo ID is an integer
         tiago_abscysse = msg.x
         tiago_ordinate = msg.y
-
-        self.dictTIAGoPosition[tiago_id] = [tiago_abscysse,tiago_ordinate]
+        if rospy.get_param("~debug", False):
+            rospy.loginfo(f"Received position from TIAGo {tiago_id}: ({tiago_abscysse}, {tiago_ordinate})")
+        self.dictTIAGoPosition[tiago_id] = [tiago_abscysse, tiago_ordinate]
 
         return None
     

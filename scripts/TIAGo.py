@@ -50,12 +50,11 @@ class TIAGo():
         # Creation of the availability publisher that will publish String messages to the 'availability' topic
         self.publisher_availability = rospy.Publisher('availability', String, queue_size=10)
         
-        #Creatio of a pblisherthat will publish Point (position) messages to the 'position' topic
+        #Creation of a publisher that will publish Point (position) messages to the 'position' topic
         self.publisher_position = rospy.Publisher('position', Point, queue_size=10)
         
-        #Creatio of a pblisherthat wil publis Stringmessages to the 'orders' topic
-        #(To notfy the rchestrtion maager tht thereare table to be cleaned)
-        self.publisher_clearing_order = rospy.Publisher('orders', Point, queue_size=10)
+        #Creation of a publisher that will publish String messages to the 'orders' topic
+        self.publisher_clearing_order = rospy.Publisher('orders', String, queue_size=10)
 
         self.rate = rospy.Rate(10) # 10Hz
 
@@ -78,9 +77,10 @@ class TIAGo():
         Publish the availability of the robot.
         Exemples of messages : "TIAGo 1 : occupied", "TIAGo 4 : available"
         """
-        availability_message = "TIAGo " +self.id + " : " + self.status 
-        rospy.loginfo("Availability message sent by a TIAGo platform : " + availability_message)
-        self.publisher.publish(availability_message)
+        availability_message = "TIAGo " + str(self.id) + " : " + self.status 
+        if rospy.get_param("~debug", False):
+            rospy.loginfo("Availability message sent by a TIAGo platform : " + availability_message)
+        self.publisher_availability.publish(availability_message)
 
     def send_position(self):
         """
@@ -92,7 +92,8 @@ class TIAGo():
         position_msg.y = self.y
         position_msg.z = self.id
 
-        rospy.loginfo("Position message sent by the TIAGo platform n°%f: (%f,%f)", position_msg.z, position_msg.x, position_msg.y)
+        if rospy.get_param("~debug", False):
+            rospy.loginfo("Position message sent by the TIAGo platform n°%f: (%f,%f)", position_msg.z, position_msg.x, position_msg.y)
         self.publisher_position.publish(position_msg)
     
     def manage_order_request(self,msg):
@@ -177,7 +178,25 @@ class TIAGo():
     
 
 if __name__ == '__main__':
-
-    tiago = TIAGo()
-
-    tiago.operation()
+    try:
+        tiago = TIAGo()
+        rospy.loginfo(f"TIAGo robot {tiago.id} initialized and running")
+        
+        # Create a rate object to control update frequency
+        rate = rospy.Rate(1)  # 1 Hz - execute once per second
+        
+        # Run until ROS is shut down
+        while not rospy.is_shutdown():
+            tiago.operation()
+            
+            # Send status updates periodically
+            tiago.send_availability()
+            tiago.send_position()
+            
+            # Sleep to maintain the desired update frequency
+            rate.sleep()
+            
+    except rospy.ROSInterruptException:
+        rospy.loginfo("TIAGo node terminated by user")
+    except Exception as e:
+        rospy.logerr(f"TIAGo node error: {e}")
