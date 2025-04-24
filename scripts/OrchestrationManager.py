@@ -63,6 +63,7 @@ class OrchestrationManager():
         self.dictTIAGoPosition = {}
         self.error_occured = 0
         self.error_messages = []
+        self.last_order_message = None
         #Generation of the map of the restaurant
         self.generation_map()
         #Subsrciption to the ROS topic "orders"
@@ -126,14 +127,10 @@ class OrchestrationManager():
         return table_number, dish, priority, msg.data
     
     def order_storing(self, msg):
-        """
-        If the dish, the table number or the priority do not correspond to legit values, it increases the number of errors to be transmitted to the staff 
-        and append the corresponding erro message to the liset error_messages
-        Store the orders in the queue if it is a dish with known name, table_number and priority:
-        - At the beginning of the queue if it is a cleaning order (priority 2)
-        - At the middle of the queue if it is a priority order (priority 1)
-        - At the end of the queue if it is a normal order
-        """
+        # Avoid duplicate logging/processing if the same message was just received
+        if self.last_order_message == msg.data:
+            return None
+        self.last_order_message = msg.data
         rospy.loginfo("Message received by the orchetration manager : %s", msg.data)
         table_number, dish, priority, message = self.extraction_data(msg)
         
