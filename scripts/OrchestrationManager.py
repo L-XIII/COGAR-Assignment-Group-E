@@ -179,7 +179,6 @@ class OrchestrationManager():
         tiago_id = int(msg.z)  # Ensure TIAGo ID is an integer
         tiago_abscysse = msg.x
         tiago_ordinate = msg.y
-        # rospy.loginfo(f"Received position from TIAGo {tiago_id}: ({tiago_abscysse}, {tiago_ordinate})")
         self.dictTIAGoPosition[tiago_id] = [tiago_abscysse, tiago_ordinate]
         return None
     

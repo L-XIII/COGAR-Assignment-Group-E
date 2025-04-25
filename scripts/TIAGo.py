@@ -55,6 +55,9 @@ class TIAGo():
         
         #Creation of a publisher that will publish String messages to the 'orders' topic
         self.publisher_clearing_order = rospy.Publisher('orders', String, queue_size=10)
+        
+        # Subscribe to order_TIAGo topic to receive orders from OrchestrationManager
+        rospy.Subscriber("order_TIAGo", String, self.manage_order_request)
 
         self.rate = rospy.Rate(10) # 10Hz
 
@@ -78,8 +81,6 @@ class TIAGo():
         Exemples of messages : "TIAGo 1 : occupied", "TIAGo 4 : available"
         """
         availability_message = "TIAGo " + str(self.id) + " : " + self.status 
-        if rospy.get_param("~debug", False):
-            rospy.loginfo("Availability message sent by a TIAGo platform : " + availability_message)
         self.publisher_availability.publish(availability_message)
 
     def send_position(self):
@@ -92,30 +93,42 @@ class TIAGo():
         position_msg.y = self.y
         position_msg.z = self.id
 
-        if rospy.get_param("~debug", False):
-            rospy.loginfo("Position message sent by the TIAGo platform n°%f: (%f,%f)", position_msg.z, position_msg.x, position_msg.y)
         self.publisher_position.publish(position_msg)
     
-    def manage_order_request(self,msg):
+    def manage_order_request(self, msg):
         """
         Manage the order request received from the orchestration manager.
         - It checks if the ID of the robot concerned is its
         - In that case, it sets the order_phase to 1 and sets the availability to "occupied", then send it to the ROS topic 
-    
-
-        Exemple of message received : "TIAGo n°3, table : 37, dish : Gunkan" 
         """
-        tiago_id_concerned = msg.data[8] #ID of the TIAGo robot concerned
+        try:
+            # Extract TIAGo ID from the message format "TIAGo n°X, ..."
+            id_start = msg.data.find("n°") + 2
+            id_end = msg.data.find(",", id_start)
+            tiago_id_concerned = int(msg.data[id_start:id_end])
 
-        if tiago_id_concerned == self.id:
-            self.target_table = int(msg.data[19])
-            if msg.data[20] != " ":#The table number has two digits
-                self.target_table = int(msg.data[19:21])
-                two_digits = 1
-            dish = msg.data[29+two_digits:-1]
-
-            self.status = "occupied"
-
+            # Check if this order is for this TIAGo robot
+            if tiago_id_concerned == self.id:                
+                # Parse table number
+                table_start = msg.data.find("table : ") + 8
+                table_end = msg.data.find(",", table_start)
+                self.target_table = int(msg.data[table_start:table_end])
+                
+                # Extract dish name
+                dish_start = msg.data.find("dish : ") + 7
+                self.dish = msg.data[dish_start:].strip()
+                
+                # Update robot status and phase
+                self.status = "occupied"
+                self.order_phase = 1
+                
+                # Immediately send updated availability
+                self.send_availability()
+                
+                rospy.loginfo(f"TIAGo {self.id} status changed to: {self.status}, serving table {self.target_table} with dish {self.dish}")
+        except Exception as e:
+            rospy.logerr(f"Error processing order request: {e}")
+            
         return None
     
     def go_to(self,location):
