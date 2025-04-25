@@ -172,7 +172,7 @@ class TIAGo():
 
             elif self.order_phase ==  5 :
                 #Entering phase 5 : the TIAGo robot has to come back to the service area 
-                rospy.loginfo(f"TIAGo {self.id} has completed the delivery and returned to service area")
+                rospy.loginfo(f"TIAGo {self.id} returned to service area")
                 self.status = "available"
                 self.order_phase = 0
                 self.target_table = None

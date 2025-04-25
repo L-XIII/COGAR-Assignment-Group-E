@@ -21,8 +21,7 @@ class SpeechInterface():
 
         print(f"TIAGo Robot n°{self.tiago.id} - 'Is everything alright with the food?'")
 
-        # problem_occurred = bernoulli_proba(10)
-        problem_occurred = bernoulli_proba(0)
+        problem_occurred = bernoulli_proba(10)
         if problem_occurred:
             print("Client - 'No, I have a problem'")
             print(f"TIAGo Robot n°{self.tiago.id} - 'Could you describe us the nature of your problem ?'")
