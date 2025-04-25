@@ -89,10 +89,12 @@ class PerceptionSystem():
         """
         
         if operation == "placement":
-            placement = bernoulli_proba(80)
+            # placement = bernoulli_proba(80)
+            placement = bernoulli_proba(100)
             return placement
         elif operation == "grasping":
-            grasping_succesful = bernoulli_proba(90)
+            # grasping_succesful = bernoulli_proba(90)
+            grasping_succesful = bernoulli_proba(100)
             return grasping_succesful
 
         else:

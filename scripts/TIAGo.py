@@ -140,29 +140,47 @@ class TIAGo():
         """
 
         if self.status == "occupied" and self.dish != "clearing":
-            #The TIAGo robot are not doing a serving operation
+            #The TIAGo robot is doing a serving operation
             if self.order_phase ==  1 :
                 #Entering phase 1 : the TIAGo robot has to go to the service area
-                pass
+                self.order_phase = 2
 
             elif self.order_phase ==  2 :
                 #Entering phase 2 : the TIAGo robot has to take the right plate
-                pass
+                self.order_phase = 3
 
             elif self.order_phase ==  3 :
                 #Entering phase 3 : the TIAGo robot has to go to the table where it will have to serve the dish
-                pass
+                self.order_phase = 4
 
             elif self.order_phase ==  4 :
                 #Entering phase 4 : the TIAGo robot has to serve the plate and to see if the client has some reclamationscomplaints 
-                pass
+                rospy.loginfo(f"TIAGo {self.id} is interacting with customer at table {self.target_table}")
+                potential_problems = self.order_verificatiion_system.verify_delivery_client()
+                
+                placement_problem, client_problem = potential_problems
+                
+                if placement_problem or client_problem:
+                    if placement_problem:
+                        rospy.logwarn(f"TIAGo {self.id} had trouble placing dish {self.dish} at table {self.target_table}")
+                    if client_problem:
+                        rospy.logwarn(f"TIAGo {self.id} received complaint from customer: {client_problem}")
+                else:
+                    rospy.loginfo(f"TIAGo {self.id} successfully delivered {self.dish} to table {self.target_table}")
+                
+                self.order_phase = 5
 
             elif self.order_phase ==  5 :
                 #Entering phase 5 : the TIAGo robot has to come back to the service area 
-                pass
+                rospy.loginfo(f"TIAGo {self.id} has completed the delivery and returned to service area")
+                self.status = "available"
+                self.order_phase = 0
+                self.target_table = None
+                self.dish = None
+                self.send_availability()
 
         if self.status == "occupied" and self.dish == "clearing":
-            #The TIAGo robot are not doing a clearing operation
+            #The TIAGo robot is doing a clearing operation
             if self.order_phase ==  1 :
                 #Entering phase 1 : the TIAGo robot has to go to the table where is located the empty plate it has to remove
                 pass

@@ -19,25 +19,21 @@ class SpeechInterface():
         - If there is no problem, the method return "None", if there is one, this method returns the nature of the problem
         """
 
-        print("TIAGo Robot n°%i - 'Here is your command !'", self.tiago.id)
-        print("TIAGo Robot n°%i - 'Is everything alright with the food?'", self.tiago.id)
+        print(f"TIAGo Robot n°{self.tiago.id} - 'Is everything alright with the food?'")
 
-        problem_occurred = bernoulli_proba(10)
+        # problem_occurred = bernoulli_proba(10)
+        problem_occurred = bernoulli_proba(0)
         if problem_occurred:
-            self.ask_for_problem()
+            print("Client - 'No, I have a problem'")
+            print(f"TIAGo Robot n°{self.tiago.id} - 'Could you describe us the nature of your problem ?'")
             problem = self.nature_of_the_problem()
             return problem
         else:
-            print("TIAGo Robot n°%i - 'Itadakamisu'", self.tiago.id)#"Buon appetito" in japanese
+            print("Client - 'Yes, everything is fine'")
+            print(f"TIAGo Robot n°{self.tiago.id} - 'Buon appetito'")
             return None
 
-    def ask_for_problem(self):
-        """
-        Ask the client for the nature of its problem
-        """
-        print("TIAGo Robot n°%i - 'Could you describe us the nature of your problem ?'", self.tiago.id)
-
-    def nature_of_the_problem():
+    def nature_of_the_problem(self):
         """
         Simulate the customer response for describing the nature of its problem
         """

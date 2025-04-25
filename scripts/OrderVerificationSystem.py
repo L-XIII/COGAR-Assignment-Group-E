@@ -15,6 +15,7 @@ class OrderVerificationSystem:
         self.order_phase = 0
         self.dish = None
         self.speech_interface = SpeechInterface()
+        self.speech_interface.tiago = tiago_platform
     
     def verify_served_order(self, dish):
         """
@@ -26,8 +27,6 @@ class OrderVerificationSystem:
             return "grasping_problem"
         return None
 
-   
-    
     def verify_delivery_client(self):
         """
         - Verify that the plate has been correctly placed
@@ -36,7 +35,7 @@ class OrderVerificationSystem:
         and its second terms regards the problems with the client ("None" if there is no problem and the nature of the problem if there is one) 
         """
         success_placement = self.tiago.perception_system.verification_of_grasping_and_placement("placement")
-        problem_client = self.speech_interface.verify_delivery_client()
+        problem_client = self.speech_interface.serving_sentences()
         potential_problems = []
         potential_problems.append(not success_placement)
         potential_problems.append(problem_client)
