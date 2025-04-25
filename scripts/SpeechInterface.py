@@ -42,8 +42,8 @@ class SpeechInterface():
             return "wrong_dish"
         
         if nature == 2:
-            print("Client - 'Excuse me, the cultery is dirty'")
-            return "dirty_cultery"
+            print("Client - 'Excuse me, clean away the empty plates'")
+            return "empty_plates"
         
         if nature == 3:
             print("That is not to criticize the food ore something, no, I just a question/request...")

@@ -177,6 +177,11 @@ class TIAGo():
                         rospy.logwarn(f"TIAGo {self.id} had trouble placing dish {self.dish} at table {self.target_table}")
                     elif client_problem:
                         rospy.logwarn(f"TIAGo {self.id} received complaint from customer: {client_problem}")
+                        if client_problem == "empty_plates":                            
+                            self.dish = "clearing"
+                            self.order_phase = 1 
+                            rospy.loginfo(f"TIAGo {self.id} will clean away the empty plates for table {self.target_table}")
+                            return
                 else:
                     rospy.loginfo(f"TIAGo {self.id} successfully delivered {self.dish} to table {self.target_table}")
                 
@@ -198,24 +203,39 @@ class TIAGo():
         if self.status == "occupied" and self.dish == "clearing":
             #The TIAGo robot is doing a clearing operation
             if self.order_phase ==  1 :
-                #Entering phase 1 : the TIAGo robot has to go to the table where is located the empty plate it has to remove
-                pass
+                #Entering phase 1 : the TIAGo robot is already at the table to clean away the empty plates
+                self.order_phase = 2
 
             elif self.order_phase ==  2 :
                 #Entering phase 2 : the TIAGo robot has to take the empty plate
-                pass
+                perception_result = self.perception_system.perception()
+                if not perception_result:
+                    rospy.logwarn(f"TIAGo {self.id} failed to grasp dish {self.dish} and tried again")
+                self.order_phase = 3
 
             elif self.order_phase ==  3 :
                 #Entering phase 3 : the TIAGo robot has to go to the cleaning area
-                pass
+                perception_result = self.perception_system.perception()
+                if not perception_result:
+                    rospy.logwarn(f"TIAGo {self.id} detected obstacle during navigation to cleaning area and avoided it")
+                self.order_phase = 4
 
             elif self.order_phase ==  4 :
-                #Entering phase 4 : the TIAGo robot has to put down the plate 
-                pass
+                #Entering phase 4 : the TIAGo robot has to just put down the plate at the cleaning area
+                self.order_phase = 5
 
             elif self.order_phase ==  5 :
                 #Entering phase 5 : the TIAGo robot has to come back to the service area 
-                pass
+                perception_result = self.perception_system.perception()
+                if not perception_result:
+                    rospy.logwarn(f"TIAGo {self.id} detected obstacle during return to service area and avoided it")
+
+                rospy.loginfo(f"TIAGo {self.id} returned to service area")
+                self.status = "available"
+                self.order_phase = 0
+                self.target_table = None
+                self.dish = None
+                self.send_availability()
 
 
         else:

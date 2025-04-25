@@ -43,14 +43,9 @@ class PerceptionSystem():
 
         if self.dish == "clearing":
             #Clearing operation
-            if self.order_phase == 2: 
-                #Phase 2 of the clearing order : the TIAGo Robot has to take the empty plate - 99% chance to locate the plate
-                plate_located = bernoulli_proba(99)
-                return plate_located
-            else:
-                #Phase 4 of the clearing order : the TIAGo Robot has put down the empty plate - 100% chance to locate a free spot in the washing_area
-                free_spot_located = bernoulli_proba(100)
-                return free_spot_located
+            #Phase 2 of the clearing order : the TIAGo Robot has to take the empty plate - 99% chance to locate the plate
+            plate_located = bernoulli_proba(99)
+            return plate_located
         else:
             #Serving operation
             if self.order_phase == 2: 
@@ -83,16 +78,16 @@ class PerceptionSystem():
     def verification_of_grasping_and_placement(self, operation):
         """
         - The parameter of the method "operation" indicates of which kind of operation we want to check the sucess:
-        - If it is a "placement" operation : there are 80% chance of success and the method returns "True" if the operation is a success and "False" if not.
-        - If it is a "grasping" operation : there are 90% chance of success and the method returns "True" if the operation is a success and "False" if not.
+        - If it is a "placement" operation : there are 99% chance of success and the method returns "True" if the operation is a success and "False" if not.
+        - If it is a "grasping" operation : there are 99% chance of success and the method returns "True" if the operation is a success and "False" if not.
         - If the type of the operation is nether "placement" nor grasping, it returns "Target unknown".
         """
         
         if operation == "placement":
-            placement = bernoulli_proba(80)
+            placement = bernoulli_proba(99)
             return placement
         elif operation == "grasping":
-            grasping_succesful = bernoulli_proba(90)
+            grasping_succesful = bernoulli_proba(99)
             return grasping_succesful
 
         else:
