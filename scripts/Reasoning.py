@@ -10,19 +10,47 @@ from geometry_msgs.msg import Point
 class TableAnalyzer:
     """
     TableAnalyzer analyzes the table layout and identifies objects on the table.
+    
+    This class is responsible for:
+    - Processing perception data to extract object information
+    - Calculating occupied areas based on detected objects
+    - Identifying free areas where new objects can be placed
+    - Providing comprehensive table layout information for placement planning
+    
     It receives information from the PerceptionSystem's ObjectRecognition component
     and sends table layout information to the PlacementPlanner.
+    
+    Attributes:
+        table_objects (list): List of objects detected on the table
+        table_dimensions (dict): Dimensions of the table (width, length in meters)
+        occupied_areas (list): Areas on the table occupied by objects
     """
 
     def __init__(self):
+        """
+        Initialize the TableAnalyzer with empty object list and default table dimensions.
+        """
         self.table_objects = []
         self.table_dimensions = {"width": 0.8, "length": 1.2}
         self.occupied_areas = []
 
     def analyze_table(self, perception_data):
         """
-        Analyzes perception data to determine table layout
-        Returns a dictionary representing the table layout
+        Analyze perception data to determine the current table layout.
+        
+        This method processes raw perception data to build a structured 
+        representation of the table layout including objects, occupied areas,
+        and available free spaces for potential placement.
+        
+        Args:
+            perception_data (list): List of detected objects from the perception system
+            
+        Returns:
+            dict: Table layout information containing:
+                - dimensions: Table size (width, length)
+                - objects: List of detected objects
+                - occupied_areas: Areas occupied by objects
+                - free_areas: Available areas for placing new objects
         """
         # Process perception data to identify objects and their positions
         self.table_objects = self._extract_objects(perception_data)
@@ -39,10 +67,19 @@ class TableAnalyzer:
 
     def _extract_objects(self, perception_data):
         """
-        Extract objects from perception data
+        Extract object information from perception data.
+        
+        Converts raw sensor data into structured object representations
+        with position and dimension information.
+        
+        Args:
+            perception_data (list): Raw perception data from sensors
+            
+        Returns:
+            list: Structured list of objects with their properties
         """
         # In a real system, this would process actual perception data
-        # For simulation, we generate random objects
+        # For simulation, we generate objects based on provided perception data
         objects = []
         if perception_data:
             for obj in perception_data:
@@ -57,7 +94,13 @@ class TableAnalyzer:
 
     def _calculate_occupied_areas(self):
         """
-        Calculate areas occupied by objects
+        Calculate areas occupied by objects on the table.
+        
+        Converts object positions and dimensions into rectangular occupied areas
+        defined by their minimum and maximum x,y coordinates.
+        
+        Returns:
+            list: List of dictionaries representing occupied rectangular areas
         """
         occupied = []
         for obj in self.table_objects:
@@ -75,11 +118,16 @@ class TableAnalyzer:
 
     def _identify_free_areas(self):
         """
-        Identify free areas on the table
+        Identify free areas on the table where objects can be placed.
+        
+        Uses a grid-based approach to find positions that do not overlap
+        with any occupied areas.
+        
+        Returns:
+            list: List of [x, y] coordinates representing free spots
         """
-        # In a real implementation, this would use spatial reasoning algorithms
-        # For simulation, we identify areas not overlapping with occupied_areas
-        grid_size = 0.1
+        # Grid-based approach to identify free areas
+        grid_size = 0.1  # 10cm grid resolution
         table_width = self.table_dimensions["width"]
         table_length = self.table_dimensions["length"]
 
@@ -107,12 +155,28 @@ class TableAnalyzer:
 class PlacementPlanner:
     """
     PlacementPlanner determines optimal placement spots for dishes.
+    
+    This class is responsible for:
+    - Finding optimal placement locations on the table
+    - Considering table layout and dish dimensions
+    - Implementing placement strategies (e.g., closest to center)
+    - Handling recalculation requests when optimal spots are unavailable
+    
     It receives table layout from TableAnalyzer, placement confirmation from OrderVerifier,
     and recalculation requests from ReasoningController.
     It sends optimal spot information to CollisionChecker.
+    
+    Attributes:
+        current_layout (dict): Current table layout information
+        dish_dimensions (dict): Dimensions of the dish to be placed
+        optimal_spot (list): Calculated optimal placement coordinates
+        placement_confirmed (bool): Flag indicating successful placement
     """
 
     def __init__(self):
+        """
+        Initialize the PlacementPlanner with default values.
+        """
         self.current_layout = None
         self.dish_dimensions = {"width": 0.2, "length": 0.2}
         self.optimal_spot = None
@@ -120,8 +184,19 @@ class PlacementPlanner:
 
     def plan_placement(self, table_layout, recalculate=False):
         """
-        Plan optimal placement for a dish based on table layout
-        Returns coordinates for optimal placement
+        Plan optimal placement for a dish based on table layout.
+        
+        Identifies the best location to place a dish considering the current
+        table layout and available free spaces. Can recalculate if previous
+        placement was unsuccessful.
+        
+        Args:
+            table_layout (dict): Current table layout information
+            recalculate (bool): Flag to force recalculation of optimal spot
+            
+        Returns:
+            list: [x, y] coordinates of the optimal placement spot,
+                 or None if no suitable spot found
         """
         self.current_layout = table_layout
 
@@ -139,8 +214,17 @@ class PlacementPlanner:
 
     def _find_optimal_spot(self, free_areas):
         """
-        Find the optimal spot among free areas
-        Strategy: find spot closest to center, with enough space for dish
+        Find the optimal spot among free areas.
+        
+        Uses a strategy to find the spot closest to the table center
+        with enough space for the dish, avoiding collisions.
+        
+        Args:
+            free_areas (list): List of available placement spots
+            
+        Returns:
+            list: [x, y] coordinates of optimal placement spot,
+                 or None if no suitable spot found
         """
         table_width = self.current_layout["dimensions"]["width"]
         table_length = self.current_layout["dimensions"]["length"]
@@ -182,7 +266,12 @@ class PlacementPlanner:
 
     def receive_placement_confirmation(self, confirmed):
         """
-        Receive confirmation of successful placement
+        Receive confirmation of successful placement.
+        
+        Updates the placement status based on feedback from manipulation system.
+        
+        Args:
+            confirmed (bool): Whether placement was successful
         """
         self.placement_confirmed = confirmed
 
@@ -190,17 +279,44 @@ class PlacementPlanner:
 class CollisionChecker:
     """
     CollisionChecker assesses collision risk for planned placement.
+    
+    This class is responsible for:
+    - Evaluating safety of planned placement locations
+    - Calculating collision risk based on proximity to other objects
+    - Determining if a placement is feasible based on risk assessment
+    - Providing detailed risk information for decision making
+    
     It receives optimal spot information from PlacementPlanner
     and sends collision risk assessment to ReasoningController.
+    
+    Attributes:
+        risk_threshold (float): Maximum acceptable risk level (0-1)
     """
 
     def __init__(self):
-        self.risk_threshold = 0.3
+        """
+        Initialize the CollisionChecker with default risk threshold.
+        """
+        self.risk_threshold = 0.3  # 30% is the maximum acceptable risk
 
     def check_collision(self, optimal_spot, table_layout, dish_dimensions):
         """
-        Check for potential collisions at the optimal spot
-        Returns a risk assessment dictionary
+        Check for potential collisions at the optimal spot.
+        
+        Evaluates collision risk by calculating proximity to other objects
+        and determining if the placement is feasible based on risk threshold.
+        
+        Args:
+            optimal_spot (list): [x, y] coordinates of proposed placement
+            table_layout (dict): Current table layout information
+            dish_dimensions (dict): Size of dish to be placed
+            
+        Returns:
+            dict: Risk assessment containing:
+                - risk: Numerical risk value (0-1)
+                - feasible: Whether placement is considered safe
+                - message: Human-readable risk description
+                - min_distance: Minimum distance to nearest object
         """
         if not optimal_spot:
             return {"risk": 1.0, "feasible": False, "message": "No optimal spot found"}
@@ -231,7 +347,15 @@ class CollisionChecker:
 
     def _generate_risk_message(self, risk):
         """
-        Generate a descriptive message about the collision risk
+        Generate a descriptive message about the collision risk.
+        
+        Converts numerical risk value to human-readable description.
+        
+        Args:
+            risk (float): Numerical risk value (0-1)
+            
+        Returns:
+            str: Human-readable risk description
         """
         if risk < 0.1:
             return "Very low risk of collision"
@@ -247,13 +371,33 @@ class CollisionChecker:
 
 class ReasoningController:
     """
-    ReasoningController coordinates the reasoning process.
+    ReasoningController coordinates the entire reasoning process.
+    
+    This class is responsible for:
+    - Orchestrating the reasoning pipeline for dish placement
+    - Managing the interaction between component systems
+    - Implementing retry logic for failed placement attempts
+    - Publishing final placement decisions to the manipulation system
+    
     It receives collision risk information from CollisionChecker
     and sends recalculation requests to PlacementPlanner and
     target dish position to ManipulationSupervisor.
+    
+    Attributes:
+        tiago (TIAGo): Reference to the TIAGo robot platform
+        table_analyzer (TableAnalyzer): Component for analyzing table layout
+        placement_planner (PlacementPlanner): Component for planning placement
+        collision_checker (CollisionChecker): Component for checking collision risks
+        max_attempts (int): Maximum number of placement attempts before giving up
     """
 
     def __init__(self, tiago_platform=None):
+        """
+        Initialize the ReasoningController with its component systems.
+        
+        Args:
+            tiago_platform (TIAGo): Reference to the TIAGo robot platform
+        """
         self.tiago = tiago_platform
         self.table_analyzer = TableAnalyzer()
         self.placement_planner = PlacementPlanner()
@@ -268,8 +412,23 @@ class ReasoningController:
 
     def process_placement_request(self, perception_data, dish_dimensions=None):
         """
-        Process a placement request using the reasoning components
-        Returns the target position for the dish
+        Process a placement request using the reasoning components.
+        
+        Orchestrates the full reasoning pipeline:
+        1. Analyze table layout
+        2. Plan optimal placement
+        3. Check collision risks
+        4. Make final placement decision
+        5. Publish target position
+        
+        Implements retry logic for up to max_attempts tries.
+        
+        Args:
+            perception_data (list): Perception data from sensors
+            dish_dimensions (dict, optional): Custom dish dimensions
+            
+        Returns:
+            list: [x, y] coordinates of target position, or None if placement failed
         """
         if dish_dimensions:
             self.placement_planner.dish_dimensions = dish_dimensions
@@ -308,7 +467,16 @@ class ReasoningController:
 
     def _publish_target_position(self, position):
         """
-        Publish target dish position for Manipulation System
+        Publish target dish position for Manipulation System.
+        
+        Creates and publishes a Point message with the target position
+        coordinates for the manipulation system to use.
+        
+        Args:
+            position (list): [x, y] coordinates for dish placement
+            
+        Returns:
+            bool: True if message was published successfully
         """
         point_msg = Point()
         point_msg.x = position[0]
@@ -323,14 +491,34 @@ class ReasoningController:
 class ReasoningSystem:
     """
     ReasoningSystem is the main interface for the reasoning subsystem.
-    It uses the singleton pattern to ensure only one instance exists.
+    
+    This class serves as the primary entry point for other systems to interact
+    with the reasoning components. It implements the singleton pattern to ensure
+    only one reasoning system exists per robot.
+    
+    This class is responsible for:
+    - Providing a unified interface to the reasoning capabilities
+    - Ensuring single instance through the singleton pattern
+    - Delegating reasoning requests to appropriate components
+    
+    Attributes:
+        tiago (TIAGo): Reference to the TIAGo robot platform
+        controller (ReasoningController): The core reasoning controller
     """
 
     _instance = None
 
     def __new__(cls, tiago_platform=None):
         """
-        Create a singleton instance of ReasoningSystem
+        Create a singleton instance of ReasoningSystem.
+        
+        Ensures only one instance of ReasoningSystem exists per application.
+        
+        Args:
+            tiago_platform (TIAGo): Reference to the TIAGo robot platform
+            
+        Returns:
+            ReasoningSystem: The singleton instance
         """
         if cls._instance is None:
             cls._instance = super(ReasoningSystem, cls).__new__(cls)
@@ -339,7 +527,12 @@ class ReasoningSystem:
 
     def __init__(self, tiago_platform=None):
         """
-        Initialize the reasoning system with its components
+        Initialize the reasoning system with its components.
+        
+        Only initializes on first instantiation due to singleton pattern.
+        
+        Args:
+            tiago_platform (TIAGo): Reference to the TIAGo robot platform
         """
         if not hasattr(self, "_initialized") or not self._initialized:
             self.tiago = tiago_platform
@@ -348,7 +541,17 @@ class ReasoningSystem:
 
     def reason_about_placement(self, perception_data, dish_dimensions=None):
         """
-        Main method to reason about placement of a dish
+        Main method to reason about optimal placement of a dish.
+        
+        This is the primary entry point for other systems to request
+        reasoning about dish placement.
+        
+        Args:
+            perception_data (list): Perception data from sensors
+            dish_dimensions (dict, optional): Custom dish dimensions
+            
+        Returns:
+            list: [x, y] coordinates of target position, or None if placement failed
         """
         return self.controller.process_placement_request(
             perception_data, dish_dimensions

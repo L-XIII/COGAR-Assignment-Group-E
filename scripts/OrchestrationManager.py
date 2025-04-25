@@ -1,62 +1,73 @@
 #!/usr/bin/env python
 
-#Libraries
+# Standard libraries
 import math
 import time 
 import random
 import rospy
 
-
+# ROS message types
 from std_msgs.msg import String
 from geometry_msgs.msg import Point
 
+# Local imports
 import PointOfSale
 import TIAGo
 
 
-#Assumption 1: The orchestration system already has the map of the restaurant 
-#Assumption 2: The way the tables are positionned in the restaurant is always the same, what changes is only their numbers (see GitHub)
-
-
-#We localize the different areas (tables, serving area,...) by their top left corner and their length and width
-#We use the singleton pattern for the OrchestrationManager class because we want only one object of this kind
-
+# Global assumptions
+# 1: The orchestration system already has the map of the restaurant 
+# 2: The way the tables are positioned in the restaurant is fixed, only their numbers can change
 
 class OrchestrationManager():
     """
-    The Orchestration Manager manages the order processing and repartition
-    The class OrchestrationManager has one parameter:
-    - list_dishes : list of dishes the restaurant serves
-    An OrchestrationManager instance has several parameters:
-    - orderQueue : list in which the orders are stored in a specific order
-    - listPOS : list of the point of sales of the restaurant 
-    - orderQueue : list where the orders are stored
-    - ongoingQueue : list where the ongoing tasks permformed by the robots are stored
-    - dictTIAGoAvailable : stores the identifiers of the TIAGo robots and their availability
-    - dictTIAGoPosition : stores the identifiers and the positions of the TIAGo robots
-    - error_occured : counts how many errors occurred and have not been transmitted to the staff
-    - error_messages : stores the error_messages to be transmitted to the staff
-    - publisher_order : publisher that send orders to the TIAGo robots
-    - publisher_error : publisher that send the error message to the staff
+    The Orchestration Manager coordinates order processing and robot task assignment.
+    
+    This class manages:
+    - Order queue management (storing, prioritizing, and assigning)
+    - Robot status tracking and coordination
+    - Task distribution based on robot availability and proximity
+    - Error handling and reporting
+    - Restaurant map representation
+    
+    It implements the singleton pattern to ensure only one orchestration manager exists.
+    
+    Class Attributes:
+        list_dishes (list): Available menu items the restaurant serves
+    
+    Instance Attributes:
+        orderQueue (list): Orders waiting to be assigned, stored based on priority
+        ongoingTasks (list): Tasks currently being performed by robots
+        dictTIAGoAvailable (dict): Maps robot IDs to availability status
+        dictTIAGoPosition (dict): Maps robot IDs to position coordinates
+        error_occured (int): Count of errors not yet transmitted to staff
+        error_messages (list): Error messages waiting to be sent to staff
+        last_order_message (str): Most recent order message to avoid duplicates
     """
 
-    list_dishes = ["Nare","Oshi","Nigri","Gunkan","Maki","Futo","Temaki","Inari","Temari","Sashimi","Uramaki"]
+    list_dishes = ["Nare", "Oshi", "Nigri", "Gunkan", "Maki", "Futo", "Temaki", "Inari", "Temari", "Sashimi", "Uramaki"]
     
     def __new__(cls): 
         """
-        The new method a method used to create a new instance of a class.
-
+        Implements singleton pattern for the OrchestrationManager.
+        
+        Returns:
+            OrchestrationManager: The singleton instance
         """
-        if not hasattr(cls, 'instance'):#Check if there is already an instance of this class, if there isn't the following code is executed
+        if not hasattr(cls, 'instance'):
             cls._instance = super(OrchestrationManager, cls).__new__(cls)
             cls._instance.__init__()
         return cls._instance
     
     def __init__(self):
         """
-        Method called for initializing the OrchestrationManager. 
-        - It generates the map of the restaurant
+        Initializes the OrchestrationManager with data structures and ROS communication.
+        
+        - Sets up data structures for orders and robot status
+        - Creates the restaurant map
+        - Establishes ROS publishers and subscribers
         """
+        # Initialize data structures
         self.orderQueue = []
         self.ongoingTasks = []
         self.dictTIAGoAvailable = {}
@@ -64,163 +75,240 @@ class OrchestrationManager():
         self.error_occured = 0
         self.error_messages = []
         self.last_order_message = None
-        #Generation of the map of the restaurant
+        
+        # Generate the map of the restaurant
         self.generation_map()
-        #Subsrciption to the ROS topic "orders"
-
-        #Creation of the order_TIAGo publisher
+        
+        # Set up ROS communication
+        # Publisher for sending orders to TIAGo robots
         self.publisher_order = rospy.Publisher("order_TIAGo", String, queue_size=10)
-
-        #Creation of the publisher that will notify the staff of potential errors
+        
+        # Publisher for sending error messages to staff interfaces
         self.publisher_error = rospy.Publisher("error_messages", String, queue_size=10)
-
+        
+        # Subscribers for receiving information from POS and robots
         rospy.Subscriber("orders", String, self.order_storing)
         rospy.Subscriber("availability", String, self.manage_availability)
         rospy.Subscriber("position", Point, self.manage_position)
 
     def generation_map(self):
         """
-        Generate the map of the restaurant
+        Generates the restaurant map with coordinates for tables and service areas.
+        
+        The map uses a coordinate system where:
+        - Each coordinate is [x, y, length, width] in meters
+        - Origin (0,0) is at the top-left corner of the restaurant
         """
-        self.nb_tables = 60 #Number of tables 
-        self.service_area_coords = [0,0,3,3] #x_coord, y_coord, length, width (in meter)
-        self.washing_area_coords = [38,0,3,3]
+        self.nb_tables = 60  # Number of tables 
+        self.service_area_coords = [0, 0, 3, 3]  # [x_coord, y_coord, length, width] in meters
+        self.washing_area_coords = [38, 0, 3, 3]  # Cleaning area coordinates
+        
+        # Generate table coordinates based on a grid layout
         self.table_coords = {}
-        for i in range(0,self.nb_tables):
-            decade_digit = i%10
-            unit_digit = i-decade_digit
-            self.table_coords[i+1]=[unit_digit*3,decade_digit*4,2,1]
+        for i in range(0, self.nb_tables):
+            decade_digit = i % 10
+            unit_digit = i - decade_digit
+            self.table_coords[i+1] = [unit_digit*3, decade_digit*4, 2, 1]  # [x, y, length, width]
+        
         return None
     
     def extraction_data(self, msg):
         """
-        This function extract the datas of the received order 
+        Extracts structured data from order message strings.
+        
+        Parses the message format: "Table : X, dish : Y, loop n°Z, priority : P"
+        
+        Args:
+            msg (String): ROS message containing order information
+            
+        Returns:
+            tuple: Contains (table_number, dish_name, priority, original_message)
         """
-        index_order = 7 #We skip the "Table : " part of the message
-
-        #Extraction of the table number
-        index_order = 8 
+        # Extract table number
+        index_order = 8  # Skip "Table : " part
         table_number = msg.data[8]
         if msg.data[9] != " " and msg.data[9] != ",":  
             table_number = msg.data[8:10]
             index_order = 9 
         table_number = ''.join(c for c in table_number if c.isdigit())
         table_number = int(table_number)
-        index_order += 9 #We skip the ", dish : " part of the message
-
-        #Extraction of the dish name
+        index_order += 9  # Skip ", dish : " part
+        
+        # Extract dish name
         index_order += 1 
         index_order_beginning_dish = index_order
         while msg.data[index_order] not in (" ", ","):
             index_order += 1
         dish = msg.data[index_order_beginning_dish:index_order]
         
-        #Extraction of the priority
+        # Extract priority level
         priority = int(msg.data[-1])
+        
         return table_number, dish, priority, msg.data
     
     def order_storing(self, msg):
-        # Avoid duplicate logging/processing if the same message was just received
+        """
+        Processes and stores incoming orders from the POS system.
+        
+        Validates order data and adds it to the appropriate position in the queue
+        based on priority level.
+        
+        Priority levels:
+        - 0: Normal order (added to end of queue)
+        - 1: Priority order (added to middle of queue)
+        - 2: Cleaning order (added to front of queue)
+        
+        Args:
+            msg (String): ROS message containing order information
+        
+        Returns:
+            None
+        """
+        # Avoid duplicate processing if message was just received
         if self.last_order_message == msg.data:
             return None
         self.last_order_message = msg.data
-        rospy.loginfo("Message received by the orchetration manager : %s", msg.data)
+        rospy.loginfo("Message received by the orchestration manager: %s", msg.data)
+        
+        # Extract order data
         table_number, dish, priority, message = self.extraction_data(msg)
-        
         order_data = [table_number, dish]
-
+        
+        # Validate order data
         if dish not in OrchestrationManager.list_dishes:
-            self.error_occured+=1
-            self.error_messages.append(message + " , Problem : Unknown dish")
+            self.error_occured += 1
+            self.error_messages.append(message + " , Problem: Unknown dish")
             return None
         
-        if table_number not in range(1, 61,1):
-            self.error_occured+=1
-            self.error_messages.append(message + " , Problem : Unknown table number")
+        if table_number not in range(1, 61):
+            self.error_occured += 1
+            self.error_messages.append(message + " , Problem: Unknown table number")
             return None
         
-        if priority not in range(0, 3,1):
-            self.error_occured+=1
-            self.error_messages.append(message + " , Problem : Unknown priority")
+        if priority not in range(0, 3):
+            self.error_occured += 1
+            self.error_messages.append(message + " , Problem: Unknown priority")
             return None
-
-        if priority == 2:#It is a cleaning order, it takes precendence over the other orders
+        
+        # Add order to queue based on priority
+        if priority == 2:  # Cleaning order (highest priority)
             self.orderQueue.insert(0, order_data)
-
-        if priority == 1:#It is a priority order, we place it in the middle of the queue 
+        elif priority == 1:  # Priority order (medium priority)
             self.orderQueue.insert(len(self.orderQueue)//2, order_data)
-
-        else:#It is a normal order, we place it at the end of the queue
+        else:  # Normal order (lowest priority)
             self.orderQueue.append(order_data)
-
+        
         return None
     
     def manage_availability(self, msg):
         """
-        Store the id and availability of the TIAGo robot and log the received message.
+        Processes TIAGo robot availability updates.
+        
+        Parses messages of format "TIAGo X : available/occupied" and updates status tracking.
+        
+        Args:
+            msg (String): ROS message with robot availability information
+            
+        Returns:
+            None
         """
         parts = msg.data.split(' : ')
         if len(parts) != 2:
             rospy.logerr(f"Invalid availability message format: {msg.data}")
             return None
+            
         id_part = parts[0].split(' ')
         if len(id_part) != 2 or not id_part[1].isdigit():
             rospy.logerr(f"Invalid TIAGo ID format in availability message: {parts[0]}")
             return None
+            
         tiago_id = int(id_part[1])
         tiago_availabiliy = parts[1].strip()
         self.dictTIAGoAvailable[tiago_id] = tiago_availabiliy
+        
         return None
 
     def manage_position(self, msg):
         """
-        Store the id and the position of the TIAGo robot and log the received message.
+        Processes TIAGo robot position updates.
+        
+        Stores robot position data from Point messages, where:
+        - x, y: Robot position coordinates
+        - z: Robot ID
+        
+        Args:
+            msg (Point): ROS message with robot position
+            
+        Returns:
+            None
         """
-        tiago_id = int(msg.z)  # Ensure TIAGo ID is an integer
-        tiago_abscysse = msg.x
-        tiago_ordinate = msg.y
+        tiago_id = int(msg.z)  # Robot ID is stored in z coordinate
+        tiago_abscysse = msg.x  # x position
+        tiago_ordinate = msg.y  # y position
         self.dictTIAGoPosition[tiago_id] = [tiago_abscysse, tiago_ordinate]
+        
         return None
     
     def compute_distance(self, tiago_id):
         """
-        Compute the distance between a TIAGo robot and the serving area
+        Computes the Euclidean distance between a TIAGo robot and the serving area.
+        
+        Used to find the closest available robot for task assignment.
+        
+        Args:
+            tiago_id (int): ID of the TIAGo robot
+            
+        Returns:
+            float: Distance to serving area, or large default if position unknown
         """
-        # Check if the TIAGo position exists in the dictionary
+        # Check if position data is available
         if tiago_id not in self.dictTIAGoPosition:
             rospy.logwarn(f"No position data for TIAGo {tiago_id}, using default position")
-            return 1000  # Return a large distance so it's unlikely to be chosen
+            return 1000  # Large default distance to make this robot unlikely to be chosen
             
+        # Get robot and serving area positions
         tiago_x = self.dictTIAGoPosition[tiago_id][0]
         tiago_y = self.dictTIAGoPosition[tiago_id][1]
-
         serving_area_x = self.service_area_coords[0]
         serving_area_y = self.service_area_coords[1]
         
-        distance = math.sqrt((tiago_x-serving_area_x)**2+(tiago_y-serving_area_y)**2)
+        # Calculate Euclidean distance
+        distance = math.sqrt((tiago_x-serving_area_x)**2 + (tiago_y-serving_area_y)**2)
+        
         return distance
     
     def assign_order(self):
         """
-        Method that takes the first order of the order queue and sends it to the available robot which is closer to the serving area.
-        Example of message sent: "TIAGo n°3, table : 37, dish : Gunkan"
+        Assigns the highest priority order to the closest available robot.
+        
+        This method:
+        1. Checks for orders to assign and available robots
+        2. Finds the closest robot to the serving area
+        3. Publishes the order to the selected robot
+        4. Updates robot status and removes the order from queue
+        
+        Returns:
+            None
         """
+        # Check if there are orders to assign
         if not self.orderQueue:
             rospy.logwarn("No orders available to assign")
             return None
             
-        # Check for available robots
+        # Find available robots
         available_robots = [id for id, status in self.dictTIAGoAvailable.items() if status == "available"]
         if not available_robots:
             rospy.logwarn("No available robots to assign order")
             return None
             
+        # Get the next order data
         order_data = self.orderQueue[0]
         table_number, dish = order_data[0], order_data[1]
-
+        
+        # Find the closest available robot
         tiago_id = 0
-        distance_min = 1000  # Distance greater than the maximum possible in the restaurant
-
+        distance_min = 1000  # Distance greater than maximum possible in restaurant
+        
         for tiago_id_available in available_robots:
             distance = self.compute_distance(tiago_id_available)
             if distance < distance_min:
@@ -230,56 +318,81 @@ class OrchestrationManager():
         if tiago_id == 0:
             rospy.logwarn("Failed to select a robot for order assignment")
             return None
-
-        order_msg = "TIAGo n°" + str(tiago_id) + ", table : " + str(table_number) + ", dish : " + dish
+        
+        # Create and publish order message
+        order_msg = f"TIAGo n°{tiago_id}, table : {table_number}, dish : {dish}"
         self.publisher_order.publish(order_msg)
         
-        # Mark the selected TIAGo as occupied and remove the order from queue
+        # Update robot status and remove order from queue
         self.dictTIAGoAvailable[tiago_id] = "occupied"
         self.orderQueue.pop(0)
         
-        rospy.loginfo(f"TIAGo {tiago_id} has been assigned to the order by the orchetration manager")
+        rospy.loginfo(f"TIAGo {tiago_id} has been assigned to the order")
+        
         return None
     
     def send_error_messages(self):
         """
-        While there is unpublished error messages, it publishs them and then decreases the counter of unpublished numbers and 
-        remove the error message from the list of unpublished error_message
+        Publishes accumulated error messages to staff interfaces.
+        
+        Processes all pending error messages in the queue and clears them after sending.
+        
+        Returns:
+            None
         """
         while self.error_occured != 0:
             error_msg = self.error_messages[0]
-            rospy.loginfo(error_msg)
-            self.publisher_order.publish(error_msg)
-            del self.error_messages[0]#Remove the error message from the list
+            rospy.loginfo(f"Sending error message: {error_msg}")
+            self.publisher_error.publish(error_msg)
+            del self.error_messages[0]  # Remove the processed error message
             self.error_occured -= 1
-
-
+        
+        return None
 
     def orchestration(self):
         """
-        Method that manages the restaurant work until the ROS node "Manager" of the Manager is shutdown.
+        Main operational loop for the orchestration system.
+        
+        Continuously:
+        1. Assigns orders to available robots
+        2. Sends error messages when needed
+        3. Maintains timing for simulation
+        
+        Returns:
+            None
         """
         nb_turns = 0 
         t = time.time()
-
-        while (nb_turns < 2000) and (len(self.ongoingTasks)==0):
-            # Only assign an order if there are orders in the queue and available robots
+        
+        while (nb_turns < 2000) and (len(self.ongoingTasks) == 0):
+            # Only assign orders when both orders and available robots exist
             if self.orderQueue and self.dictTIAGoAvailable:
                 self.assign_order()
-            if time.time()-t > 1:
+                
+            # Process any pending error messages
+            if self.error_occured > 0:
+                self.send_error_messages()
+                
+            # Update timing for simulation
+            if time.time() - t > 1:
                 t = time.time()
                 nb_turns += 1
+                
+            # Yield control briefly to avoid hogging CPU
             rospy.sleep(0.1)
-            
+        
+        return None
 
 
 if __name__ == '__main__':
-    # Remove rospy.init_node call from the global scope
     try:
+        # Initialize ROS node
         rospy.init_node("OrchestrationManager", anonymous=True)
+        # Create and run the orchestration manager
         orchestrationManager = OrchestrationManager()
         orchestrationManager.orchestration()
     except rospy.exceptions.ROSInitException:
-        print("WARNING: ROS node already initialized. Running in non-ROS mode.")
+        # Handle case where node is already initialized
+        rospy.logwarn("ROS node already initialized. Using existing node.")
         orchestrationManager = OrchestrationManager()
         orchestrationManager.orchestration()

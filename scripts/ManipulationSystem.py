@@ -10,42 +10,57 @@ from geometry_msgs.msg import Point, Vector3
 class ForceSensor:
     """
     The ForceSensor class provides force feedback during manipulation tasks.
-    It sends information to SafetyMonitor and GripperController components.
+    
+    This class handles:
+    - Force measurement during manipulation operations
+    - Collision detection based on force thresholds
+    - Publishing force data to other components
+    
+    Communication:
+    - Publishes to: 'force_data' (Float32)
+    - Used by: SafetyMonitor, GripperController
     """
 
     def __init__(self):
-        self.force_threshold = 10.0  # Newtons
-        self.current_force = 0.0
+        self.force_threshold = 10.0  # Newtons - threshold for collision detection
+        self.current_force = 0.0  # Current measured force value
 
         # Publisher for force data
         self.force_publisher = rospy.Publisher("force_data", Float32, queue_size=10)
 
     def measure_force(self):
         """
-        Simulates force measurement during manipulation tasks
-        Returns current force value in Newtons
+        Simulates force measurement during manipulation tasks.
+        
+        In a real system, this would read from actual force sensors.
+        For simulation, we generate simulated force readings with noise.
+        
+        Returns:
+            float: Current force value in Newtons
         """
-        # In a real system, this would read from actual force sensors
-        # For simulation, we generate simulated force readings
-        base_force = 2.0  # baseline force
-        noise = random.uniform(-1.0, 1.0)
+        # Simulate force readings with base value and random noise
+        base_force = 2.0  # baseline force in Newtons
+        noise = random.uniform(-1.0, 1.0)  # Random noise component
         self.current_force = base_force + noise
 
-        # Publish force data
+        # Publish force data for other components
         self.force_publisher.publish(self.current_force)
 
         return self.current_force
 
     def detect_collision(self):
         """
-        Detects if the force exceeds the safe threshold
-        Returns True if collision is detected, False otherwise
+        Detects if the measured force exceeds the safe threshold.
+        
+        Returns:
+            bool: True if collision is detected (force > threshold), False otherwise
         """
         return self.current_force > self.force_threshold
 
     def reset(self):
         """
-        Reset force sensor readings
+        Resets force sensor readings to zero.
+        Called after completing a manipulation task or when recalibrating.
         """
         self.current_force = 0.0
 
@@ -53,66 +68,96 @@ class ForceSensor:
 class GripperMotors:
     """
     The GripperMotors class controls the physical motors of the gripper.
-    It receives control commands from GripperController.
+    
+    This class handles:
+    - Moving the gripper to specified positions
+    - Tracking gripper status (position, operational state)
+    - Receiving control commands from GripperController
+    
+    Communication:
+    - Subscribes to: 'gripper_commands' (Float32)
+    - Controlled by: GripperController
     """
 
     def __init__(self):
         self.position = 0.0  # 0.0 = fully open, 1.0 = fully closed
-        self.max_force = 15.0  # Newtons
-        self.status = "idle"  # idle, moving, holding
+        self.max_force = 15.0  # Maximum force in Newtons
+        self.status = "idle"  # Current status: idle, moving, holding, error
 
         # Subscriber for gripper commands
         rospy.Subscriber("gripper_commands", Float32, self.receive_command)
 
     def receive_command(self, command_msg):
         """
-        Receives and processes motor commands
+        Receives and processes motor position commands.
+        
+        Args:
+            command_msg (Float32): Target position value (0.0-1.0)
         """
         target_position = command_msg.data
         self.move_to_position(target_position)
 
     def move_to_position(self, target_position):
         """
-        Moves the gripper to the target position
-        Returns success of the movement operation
+        Moves the gripper to the specified target position.
+        
+        In a real system, this would send commands to actual motors.
+        For simulation, we simulate movement time and success probability.
+        
+        Args:
+            target_position (float): Target position (0.0-1.0)
+            
+        Returns:
+            bool: Success of the movement operation
         """
-        # In a real system, this would send commands to actual motors
-        self.status = "moving"
+        self.status = "moving"  # Update status to moving
 
         # Simulate movement time
-        # In a real implementation, this would be handled by a control loop
-        rospy.sleep(0.5)  # Simulate movement time
+        rospy.sleep(0.5)  # Simulate 0.5 second movement time
 
         # Simulate success with 95% probability
         success = random.random() < 0.95
 
         if success:
             self.position = target_position
+            # Update status based on position (holding if closed, idle if open)
             self.status = "holding" if target_position > 0.5 else "idle"
             return True
         else:
-            self.status = "error"
+            self.status = "error"  # Movement failed
             return False
 
     def get_status(self):
         """
-        Returns the current status of the gripper motors
+        Returns the current status of the gripper motors.
+        
+        Returns:
+            dict: Contains position and status information
         """
         return {"position": self.position, "status": self.status}
 
 
 class GripperController:
     """
-    The GripperController class coordinates gripper operations.
-    It receives information from ForceSensor and GraspCommand from ManipulationSupervisor.
-    It sends control signals to GripperMotors.
+    The GripperController class coordinates higher-level gripper operations.
+    
+    This class handles:
+    - Processing grasp commands (grasp, release, adjust)
+    - Monitoring force feedback and adjusting grip strength
+    - Controlling the gripper motors
+    
+    Communication:
+    - Subscribes to: 'grasp_commands' (String), 'force_data' (Float32)
+    - Publishes to: 'gripper_commands' (Float32)
+    - Controls: GripperMotors
+    - Receives data from: ForceSensor, ManipulationSupervisor
     """
 
     def __init__(self, force_sensor=None, gripper_motors=None):
         self.force_sensor = force_sensor
         self.gripper_motors = gripper_motors
         self.grip_strength = 0.7  # Default grip strength (0-1)
-        self.gripping_object = False
+        self.gripping_object = False  # Whether currently holding an object
 
         # Publishers and subscribers
         self.grip_command_publisher = rospy.Publisher(
@@ -123,7 +168,16 @@ class GripperController:
 
     def receive_grasp_command(self, command_msg):
         """
-        Processes grasp commands from ManipulationSupervisor
+        Processes grasp commands from ManipulationSupervisor.
+        
+        Supported commands:
+        - "grasp": Close gripper to grasp an object
+        - "release": Open gripper to release an object
+        - "adjust_stronger": Increase grip strength
+        - "adjust_gentler": Decrease grip strength
+        
+        Args:
+            command_msg (String): Command string
         """
         command = command_msg.data
 
@@ -137,7 +191,12 @@ class GripperController:
 
     def monitor_force(self, force_msg):
         """
-        Monitors force data to adjust gripper behavior
+        Monitors force data to adjust gripper behavior for safety.
+        
+        If force exceeds safe threshold while gripping, reduces grip strength.
+        
+        Args:
+            force_msg (Float32): Force sensor reading
         """
         force = force_msg.data
 
@@ -148,8 +207,10 @@ class GripperController:
 
     def execute_grasp(self):
         """
-        Executes a grasp operation
-        Returns success status
+        Executes a grasp operation to pick up an object.
+        
+        Returns:
+            bool: Success status of the grasp operation
         """
         # Close gripper to grasp object
         success = self._send_grip_command(self.grip_strength)
@@ -164,8 +225,10 @@ class GripperController:
 
     def execute_release(self):
         """
-        Executes a release operation
-        Returns success status
+        Executes a release operation to put down an object.
+        
+        Returns:
+            bool: Success status of the release operation
         """
         # Open gripper to release object
         success = self._send_grip_command(0.0)
@@ -180,7 +243,13 @@ class GripperController:
 
     def _send_grip_command(self, position):
         """
-        Sends grip command to gripper motors
+        Sends grip command to gripper motors.
+        
+        Args:
+            position (float): Target position value (0.0-1.0)
+            
+        Returns:
+            bool: Success status of the command
         """
         # Ensure position is within valid range
         position = max(0.0, min(1.0, position))
@@ -194,7 +263,10 @@ class GripperController:
 
     def _adjust_grip_strength(self, command):
         """
-        Adjusts grip strength based on command
+        Adjusts grip strength based on command.
+        
+        Args:
+            command (str): "adjust_stronger" or "adjust_gentler"
         """
         if command == "adjust_stronger":
             self.grip_strength = min(1.0, self.grip_strength + 0.1)
@@ -209,14 +281,24 @@ class GripperController:
 class JointsMotors:
     """
     The JointsMotors class controls the physical motors of the robot arm joints.
-    It receives control commands from ArmController and sends MotorsFeedback to SafetyMonitor.
+    
+    This class handles:
+    - Moving arm joints to specified positions
+    - Tracking joint positions, velocities, and torques
+    - Publishing motor feedback for monitoring
+    
+    Communication:
+    - Subscribes to: 'joint_commands' (String)
+    - Publishes to: 'motors_feedback' (String)
+    - Controlled by: ArmController
+    - Provides feedback to: SafetyMonitor
     """
 
     def __init__(self):
         self.joint_positions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # 7-DOF arm
         self.joint_velocities = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.joint_torques = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.status = "idle"
+        self.status = "idle"  # Current status: idle, moving, error
 
         # Publishers for feedback
         self.feedback_publisher = rospy.Publisher(
@@ -228,8 +310,13 @@ class JointsMotors:
 
     def receive_command(self, command_msg):
         """
-        Receives and processes joint commands
-        Format: "position:j1,j2,j3,j4,j5,j6,j7"
+        Receives and processes joint position commands.
+        
+        Command format: "position:j1,j2,j3,j4,j5,j6,j7"
+        where j1-j7 are joint position values
+        
+        Args:
+            command_msg (String): Joint command string
         """
         command = command_msg.data
 
@@ -244,17 +331,25 @@ class JointsMotors:
 
     def move_to_position(self, target_positions):
         """
-        Moves joints to target positions
-        Returns success status
+        Moves joints to target positions.
+        
+        In a real system, this would send commands to actual motors.
+        For simulation, we simulate movement time and success probability.
+        
+        Args:
+            target_positions (list): List of 7 joint position values
+            
+        Returns:
+            bool: Success status of the movement operation
         """
-        # In a real system, this would send commands to actual motors
+        # Update status to moving
         self.status = "moving"
 
         # Publish status update
         self.feedback_publisher.publish("status:moving")
 
-        # Simulate movement time (would be handled by control loop in reality)
-        rospy.sleep(0.8)  # Simulate movement time
+        # Simulate movement time
+        rospy.sleep(0.8)  # Simulate 0.8 second movement time
 
         # Simulate success with 95% probability
         success = random.random() < 0.95
@@ -263,7 +358,7 @@ class JointsMotors:
             self.joint_positions = target_positions
             self.status = "idle"
 
-            # Simulate some feedback data
+            # Generate and publish feedback data
             self._generate_feedback_data()
 
             # Publish success feedback
@@ -276,7 +371,11 @@ class JointsMotors:
 
     def _generate_feedback_data(self):
         """
-        Generates and publishes simulated feedback data
+        Generates and publishes simulated joint feedback data.
+        
+        This simulates sensor readings from the joints including:
+        - Small variations in actual position
+        - Random velocity and torque values within expected ranges
         """
         # Generate simulated motor feedback
         for i in range(len(self.joint_positions)):
@@ -294,7 +393,10 @@ class JointsMotors:
 
     def get_status(self):
         """
-        Returns the current status of joints
+        Returns the current status of all joints.
+        
+        Returns:
+            dict: Contains positions, velocities, torques and status
         """
         return {
             "positions": self.joint_positions,
@@ -307,13 +409,22 @@ class JointsMotors:
 class ArmController:
     """
     The ArmController class manages arm movements and trajectories.
-    It receives Trajectory information from ManipulationSupervisor and safety data from SafetyMonitor.
-    It sends control commands to JointsMotors.
+    
+    This class handles:
+    - Processing and executing trajectory commands
+    - Converting cartesian waypoints to joint positions
+    - Monitoring safety status and aborting if necessary
+    
+    Communication:
+    - Subscribes to: 'trajectory_commands' (String), 'safety_status' (String), 'motors_feedback' (String)
+    - Publishes to: 'joint_commands' (String)
+    - Controls: JointsMotors
+    - Receives data from: ManipulationSupervisor, SafetyMonitor
     """
 
     def __init__(self, joints_motors=None):
         self.joints_motors = joints_motors
-        self.current_trajectory = None
+        self.current_trajectory = None  # Current trajectory being executed
         self.execution_status = "idle"  # idle, executing, completed, aborted
         self.safety_status = "normal"  # normal, warning, critical
 
@@ -327,13 +438,17 @@ class ArmController:
 
     def receive_trajectory(self, trajectory_msg):
         """
-        Receives trajectory commands from ManipulationSupervisor
+        Receives trajectory commands from ManipulationSupervisor.
+        
+        Trajectory format: "trajectory:x1,y1,z1,r1,p1,y1|x2,y2,z2,r2,p2,y2|..."
+        Each waypoint contains position (x,y,z) and orientation (roll,pitch,yaw)
+        
+        Args:
+            trajectory_msg (String): Trajectory command string
         """
         trajectory_data = trajectory_msg.data
 
         # Parse trajectory data
-        # Format: "trajectory:waypoint1|waypoint2|waypoint3"
-        # Each waypoint: "x,y,z,roll,pitch,yaw"
         try:
             if trajectory_data.startswith("trajectory:"):
                 trajectory_str = trajectory_data.replace("trajectory:", "")
@@ -353,7 +468,12 @@ class ArmController:
 
     def receive_safety_status(self, status_msg):
         """
-        Receives safety status updates from SafetyMonitor
+        Receives safety status updates from SafetyMonitor.
+        
+        If safety becomes critical during execution, aborts the trajectory.
+        
+        Args:
+            status_msg (String): Safety status ("normal", "warning", "critical")
         """
         self.safety_status = status_msg.data
 
@@ -363,7 +483,12 @@ class ArmController:
 
     def receive_motor_feedback(self, feedback_msg):
         """
-        Receives feedback from JointsMotors
+        Receives feedback from JointsMotors.
+        
+        Updates execution status based on motor feedback.
+        
+        Args:
+            feedback_msg (String): Motor feedback status
         """
         feedback = feedback_msg.data
 
@@ -380,7 +505,10 @@ class ArmController:
 
     def execute_trajectory(self):
         """
-        Executes the current trajectory
+        Executes the current trajectory by processing each waypoint sequentially.
+        
+        Returns:
+            bool: Success status of trajectory execution
         """
         if not self.current_trajectory or self.safety_status == "critical":
             self.execution_status = "aborted"
@@ -389,8 +517,7 @@ class ArmController:
         self.execution_status = "executing"
         rospy.loginfo("Starting trajectory execution")
 
-        # In a real system, we'd use a control loop
-        # For simulation, we'll execute each waypoint sequentially
+        # Execute each waypoint sequentially
         for waypoint_idx, waypoint in enumerate(self.current_trajectory):
             # Check safety status before proceeding
             if self.safety_status == "critical":
@@ -398,8 +525,6 @@ class ArmController:
                 return False
 
             # Convert cartesian waypoint to joint positions
-            # In a real system, we'd use inverse kinematics
-            # For simulation, we'll use a simplified approach
             joint_positions = self._simplified_inverse_kinematics(waypoint)
 
             # Send command to joints motors
@@ -407,7 +532,6 @@ class ArmController:
             self.command_publisher.publish(command)
 
             # Wait for completion before proceeding to next waypoint
-            # In a real system, we'd use feedback to determine completion
             rospy.sleep(1.0)  # Simulate execution time
 
             # Log progress
@@ -420,13 +544,14 @@ class ArmController:
 
     def abort_trajectory(self):
         """
-        Aborts the current trajectory execution
+        Aborts the current trajectory execution for safety.
+        
+        Stops movement by commanding the joints to hold their current positions.
         """
         if self.execution_status == "executing":
             rospy.logwarn("Aborting trajectory execution")
 
             # Stop movement - send command to move to current position
-            # In a real system, we might use a smoother approach
             if self.joints_motors:
                 current_positions = self.joints_motors.joint_positions
                 command = f"position:{','.join([str(jp) for jp in current_positions])}"
@@ -436,21 +561,28 @@ class ArmController:
 
     def _simplified_inverse_kinematics(self, cartesian_point):
         """
-        Simplified inverse kinematics computation for simulation
-        In a real system, this would be a proper IK algorithm
+        Simplified inverse kinematics computation for simulation.
+        
+        Converts from cartesian coordinates and orientation to joint angles.
+        In a real system, this would be replaced with an accurate IK solver.
+        
+        Args:
+            cartesian_point (list): [x, y, z, roll, pitch, yaw]
+            
+        Returns:
+            list: 7 joint position values
         """
         x, y, z, roll, pitch, yaw = cartesian_point
 
-        # This is a very simplified approximation
-        # In a real robot, this would be a proper IK calculation
-        j1 = math.atan2(y, x)
+        # This is a simplified approximation of inverse kinematics
+        j1 = math.atan2(y, x)  # Base rotation
         r_xy = math.sqrt(x**2 + y**2)
-        j2 = math.atan2(z, r_xy)
-        j3 = math.sin(roll) * 0.5
-        j4 = math.sin(pitch) * 0.5
-        j5 = math.sin(yaw) * 0.5
-        j6 = r_xy * 0.1
-        j7 = z * 0.1
+        j2 = math.atan2(z, r_xy)  # Shoulder
+        j3 = math.sin(roll) * 0.5  # Elbow
+        j4 = math.sin(pitch) * 0.5  # Wrist 1
+        j5 = math.sin(yaw) * 0.5  # Wrist 2
+        j6 = r_xy * 0.1  # Wrist 3
+        j7 = z * 0.1  # Gripper joint
 
         # Add some noise to simulate realistic IK
         noise = 0.05
@@ -470,8 +602,17 @@ class ArmController:
 class SafetyMonitor:
     """
     The SafetyMonitor class monitors the safety of manipulation operations.
-    It receives MotorsFeedback from JointsMotors and force data from ForceSensor.
-    It sends safety information to ManipulationSupervisor and ArmController.
+    
+    This class handles:
+    - Monitoring joint positions, velocities, and torques
+    - Processing force sensor data to detect collisions
+    - Publishing safety status updates
+    
+    Communication:
+    - Subscribes to: 'motors_feedback' (String), 'force_data' (Float32)
+    - Publishes to: 'safety_status' (String)
+    - Provides safety information to: ManipulationSupervisor, ArmController
+    - Receives data from: JointsMotors, ForceSensor
     """
 
     def __init__(self, force_sensor=None):
@@ -492,7 +633,12 @@ class SafetyMonitor:
 
     def process_motors_feedback(self, feedback_msg):
         """
-        Processes feedback from JointsMotors to detect safety issues
+        Processes feedback from JointsMotors to detect safety issues.
+        
+        Checks if joint positions are within safe limits.
+        
+        Args:
+            feedback_msg (String): Motor feedback data
         """
         feedback = feedback_msg.data
 
@@ -506,7 +652,14 @@ class SafetyMonitor:
 
     def process_force_data(self, force_msg):
         """
-        Processes force data to detect potential collisions
+        Processes force data to detect potential collisions.
+        
+        Updates safety status based on force thresholds:
+        - Above 12.0N: Warning
+        - Above 15.0N: Critical
+        
+        Args:
+            force_msg (Float32): Force sensor reading
         """
         force = force_msg.data
 
@@ -522,7 +675,10 @@ class SafetyMonitor:
 
     def _check_joint_limits(self, joint_positions):
         """
-        Checks if joint positions are within safe limits
+        Checks if joint positions are within safe limits.
+        
+        Args:
+            joint_positions (list): List of joint position values
         """
         min_pos, max_pos = self.joint_limits["position"]
 
@@ -535,7 +691,14 @@ class SafetyMonitor:
 
     def update_safety_status(self, status, message):
         """
-        Updates and publishes safety status
+        Updates and publishes safety status.
+        
+        Only updates if new status is more critical than current status
+        (normal < warning < critical).
+        
+        Args:
+            status (str): New safety status
+            message (str): Descriptive message
         """
         # Only update if new status is more critical than current
         status_priority = {"normal": 0, "warning": 1, "critical": 2}
@@ -543,7 +706,7 @@ class SafetyMonitor:
         if status_priority.get(status, 0) >= status_priority.get(self.safety_status, 0):
             self.safety_status = status
 
-            # Log message
+            # Log message with appropriate level
             if status == "warning":
                 rospy.logwarn(f"Safety warning: {message}")
             elif status == "critical":
@@ -556,7 +719,10 @@ class SafetyMonitor:
 
     def is_operation_safe(self):
         """
-        Checks if current state is safe for operations
+        Checks if current state is safe for operations.
+        
+        Returns:
+            bool: True if safe (not critical), False otherwise
         """
         return self.safety_status != "critical"
 
@@ -564,9 +730,17 @@ class SafetyMonitor:
 class ManipulationSupervisor:
     """
     The ManipulationSupervisor class coordinates the overall manipulation process.
-    It receives TargetDishPosition from ReasoningController and information from SafetyMonitor.
-    It sends Trajectory to ArmController, GraspCommand to GripperController,
-    and ManipulationStatus to Navigation's SLAM component.
+    
+    This class handles:
+    - Receiving target positions from the reasoning system
+    - Planning and coordinating manipulation sequences
+    - Monitoring safety and operation status
+    
+    Communication:
+    - Subscribes to: 'target_dish_position' (Point), 'safety_status' (String), 'perception_data' (String)
+    - Publishes to: 'manipulation_status' (String), 'trajectory_commands' (String), 'grasp_commands' (String)
+    - Coordinates: ArmController, GripperController
+    - Receives data from: ReasoningController, SafetyMonitor, PerceptionSystem
     """
 
     def __init__(
@@ -581,10 +755,9 @@ class ManipulationSupervisor:
         self.safety_monitor = safety_monitor
         self.tiago = tiago_platform
 
-        self.target_position = None
-        self.manipulation_status = (
-            "idle"  # idle, moving, grasping, placing, completed, failed
-        )
+        self.target_position = None  # Target position for manipulation
+        # Status: idle, moving, grasping, placing, completed, failed
+        self.manipulation_status = "idle"
 
         # Publishers
         self.status_publisher = rospy.Publisher(
@@ -602,7 +775,12 @@ class ManipulationSupervisor:
 
     def receive_target_position(self, position_msg):
         """
-        Receives target dish position from ReasoningController
+        Receives target dish position from ReasoningController.
+        
+        Starts the manipulation planning and execution sequence.
+        
+        Args:
+            position_msg (Point): Target position (x, y, z)
         """
         self.target_position = [position_msg.x, position_msg.y, position_msg.z]
         rospy.loginfo(f"Received target position: {self.target_position}")
@@ -612,7 +790,12 @@ class ManipulationSupervisor:
 
     def receive_safety_status(self, status_msg):
         """
-        Receives safety status updates
+        Receives safety status updates from SafetyMonitor.
+        
+        Aborts manipulation if safety becomes critical.
+        
+        Args:
+            status_msg (String): Safety status
         """
         safety_status = status_msg.data
 
@@ -622,15 +805,28 @@ class ManipulationSupervisor:
 
     def receive_perception_data(self, perception_msg):
         """
-        Processes perception data for object recognition
+        Processes perception data for object recognition.
+        
+        In a real system, this would use perception data to refine manipulation.
+        
+        Args:
+            perception_msg (String): Perception data
         """
         # In a real system, this would process detailed perception data
-        # For simulation, we'll just acknowledge receipt
         rospy.loginfo("Received perception data for manipulation")
 
     def plan_and_execute_manipulation(self):
         """
-        Plans and executes the manipulation sequence
+        Plans and executes the complete manipulation sequence.
+        
+        Steps:
+        1. Plan approach trajectory
+        2. Execute approach trajectory
+        3. Execute grasp/release
+        4. Plan and execute retreat trajectory
+        
+        Returns:
+            bool: Success status of the manipulation sequence
         """
         if not self.target_position or not self.safety_monitor.is_operation_safe():
             self.update_status(
@@ -676,7 +872,10 @@ class ManipulationSupervisor:
 
     def execute_grasp(self):
         """
-        Executes grasp or release operation
+        Executes grasp or release operation depending on the current status.
+        
+        When approaching to grasp: executes grasp
+        When approaching to place: executes release
         """
         if self.manipulation_status == "moving":
             # We're approaching to grasp
@@ -692,7 +891,12 @@ class ManipulationSupervisor:
 
     def abort_manipulation(self, reason):
         """
-        Aborts the current manipulation operation
+        Aborts the current manipulation operation.
+        
+        Updates status and logs the reason for aborting.
+        
+        Args:
+            reason (str): Reason for aborting
         """
         rospy.logwarn(f"Aborting manipulation: {reason}")
 
@@ -704,11 +908,15 @@ class ManipulationSupervisor:
 
     def update_status(self, status, message):
         """
-        Updates and publishes manipulation status
+        Updates and publishes manipulation status.
+        
+        Args:
+            status (str): New status (idle, moving, grasping, placing, completed, failed)
+            message (str): Descriptive message
         """
         self.manipulation_status = status
 
-        # Log message
+        # Log message with appropriate level
         if status == "failed":
             rospy.logwarn(f"Manipulation failed: {message}")
         else:
@@ -719,18 +927,20 @@ class ManipulationSupervisor:
 
     def _plan_trajectory(self, trajectory_type):
         """
-        Plans trajectory for approach or retreat
-        Returns a string representation of the trajectory
+        Plans approach or retreat trajectories.
+        
+        Args:
+            trajectory_type (str): "approach" or "retreat"
+            
+        Returns:
+            str: String representation of the trajectory waypoints
         """
         if trajectory_type == "approach":
             # Plan approach to target position
-            # In a real system, this would use motion planning
-            # For simulation, we'll create a simple linear approach
-
-            # Assume current position is origin
+            # Assume current position is origin for simulation
             current_position = [0.0, 0.0, 0.2]
 
-            # Generate intermediate waypoints
+            # Generate intermediate waypoints for smooth approach
             waypoint1 = self._interpolate_position(
                 current_position, self.target_position, 0.3
             )
@@ -741,23 +951,23 @@ class ManipulationSupervisor:
             # Add orientation information (roll, pitch, yaw)
             waypoint1.extend([0.0, 0.0, 0.0])
             waypoint2.extend([0.0, 0.0, 0.0])
-            self.target_position.extend([0.0, 0.0, 0.0])
+            target_with_orientation = list(self.target_position) + [0.0, 0.0, 0.0]
 
             # Create trajectory string
-            trajectory = f"{','.join([str(x) for x in waypoint1])}|{','.join([str(x) for x in waypoint2])}|{','.join([str(x) for x in self.target_position])}"
+            trajectory = f"{','.join([str(x) for x in waypoint1])}|{','.join([str(x) for x in waypoint2])}|{','.join([str(x) for x in target_with_orientation])}"
 
             return trajectory
 
         elif trajectory_type == "retreat":
             # Plan retreat from target position
-            # For simulation, move upward then back
-
             # Add orientation information if not already present
             if len(self.target_position) == 3:
-                self.target_position.extend([0.0, 0.0, 0.0])
+                target_with_orientation = list(self.target_position) + [0.0, 0.0, 0.0]
+            else:
+                target_with_orientation = list(self.target_position)
 
             # Create waypoints for retreat
-            retreat_point1 = list(self.target_position)
+            retreat_point1 = list(target_with_orientation)
             retreat_point1[2] += 0.1  # Move up
 
             retreat_point2 = list(retreat_point1)
@@ -772,7 +982,15 @@ class ManipulationSupervisor:
 
     def _interpolate_position(self, start_pos, end_pos, factor):
         """
-        Interpolates between two positions by a factor
+        Interpolates between two positions by a factor.
+        
+        Args:
+            start_pos (list): Starting position coordinates
+            end_pos (list): Ending position coordinates
+            factor (float): Interpolation factor (0.0-1.0)
+            
+        Returns:
+            list: Interpolated position
         """
         result = []
         for i in range(min(len(start_pos), len(end_pos))):
@@ -783,14 +1001,27 @@ class ManipulationSupervisor:
 class ManipulationSystem:
     """
     ManipulationSystem is the main interface for the manipulation subsystem.
-    It integrates all manipulation components and provides a unified interface.
+    
+    This class integrates all manipulation components and provides a unified interface
+    to the rest of the robot system. It uses the singleton pattern to ensure only 
+    one instance exists.
+    
+    Communication:
+    - Coordinates all manipulation components
+    - Provides main interface for external systems
     """
 
     _instance = None
 
     def __new__(cls, tiago_platform=None):
         """
-        Create a singleton instance of ManipulationSystem
+        Creates a singleton instance of ManipulationSystem.
+        
+        Args:
+            tiago_platform: Reference to the TIAGo robot instance
+            
+        Returns:
+            ManipulationSystem: The singleton instance
         """
         if cls._instance is None:
             cls._instance = super(ManipulationSystem, cls).__new__(cls)
@@ -799,12 +1030,17 @@ class ManipulationSystem:
 
     def __init__(self, tiago_platform=None):
         """
-        Initialize the manipulation system with all its components
+        Initializes the manipulation system with all its components.
+        
+        Only initializes on first instantiation due to singleton pattern.
+        
+        Args:
+            tiago_platform: Reference to the TIAGo robot instance
         """
         if not hasattr(self, "_initialized") or not self._initialized:
             self.tiago = tiago_platform
 
-            # Initialize components
+            # Initialize components in dependency order
             self.force_sensor = ForceSensor()
             self.gripper_motors = GripperMotors()
             self.joints_motors = JointsMotors()
@@ -826,7 +1062,16 @@ class ManipulationSystem:
 
     def execute_manipulation(self, target_position):
         """
-        Main method to execute a manipulation task
+        Main method to execute a manipulation task.
+        
+        This is the primary entry point for external systems to request
+        manipulation operations.
+        
+        Args:
+            target_position (list): Target position coordinates [x, y, z]
+            
+        Returns:
+            bool: True if manipulation was successful, False otherwise
         """
         # Convert target position to Point message
         target_point = Point()
