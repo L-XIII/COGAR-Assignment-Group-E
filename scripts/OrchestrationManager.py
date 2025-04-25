@@ -164,22 +164,6 @@ class OrchestrationManager():
     
     def manage_availability(self, msg):
         """
-<<<<<<< HEAD
-        Extract the availability of the TIAGo robots and verify if it is either equal to "available" or "occupied".
-        If that the case, it store the id and the availability of the tiago in the dictionnary dictTIAGoAvailability.
-        If that is not the case, it add an error message to the list of error messages non yet published and increase the counter of messages non published.
-
-        Exemples of messages received: "TIAGo 1 : occupied", "TIAGo 4 : available"
-        """
-        tiago_id = int(msg.data[6])
-        tiago_availabiliy = msg.data[10:]
-
-        if tiago_availabiliy != "available" and tiago_availabiliy != "occupied":
-            self.error_occured+=1
-            self.error_messages.append(msg.data + " , Problem : Unknown status.")
-            return None
-
-=======
         Store the id and availability of the TIAGo robot and log the received message.
         """
         parts = msg.data.split(' : ')
@@ -192,30 +176,19 @@ class OrchestrationManager():
             return None
         tiago_id = int(id_part[1])
         tiago_availabiliy = parts[1].strip()
-        if rospy.get_param("~debug", False):
-            rospy.loginfo(f"Received availability from TIAGo {tiago_id}: {tiago_availabiliy}")
->>>>>>> dff5786dd48d46475e0e1e04bb3268afffadb4f8
+        rospy.loginfo(f"Received availability from TIAGo {tiago_id}: {tiago_availabiliy}")
         self.dictTIAGoAvailable[tiago_id] = tiago_availabiliy
-
         return None
 
     def manage_position(self, msg):
         """
-<<<<<<< HEAD
-        Store the id and the position of the tiago in the dictionnary dictTIAGoPosition
-
-        Exemple of message received : "Position message sent by the TIAGo platform n°4: (14.53, 12.14)
-=======
         Store the id and the position of the TIAGo robot and log the received message.
->>>>>>> dff5786dd48d46475e0e1e04bb3268afffadb4f8
         """
         tiago_id = int(msg.z)  # Ensure TIAGo ID is an integer
         tiago_abscysse = msg.x
         tiago_ordinate = msg.y
-        if rospy.get_param("~debug", False):
-            rospy.loginfo(f"Received position from TIAGo {tiago_id}: ({tiago_abscysse}, {tiago_ordinate})")
+        rospy.loginfo(f"Received position from TIAGo {tiago_id}: ({tiago_abscysse}, {tiago_ordinate})")
         self.dictTIAGoPosition[tiago_id] = [tiago_abscysse, tiago_ordinate]
-
         return None
     
     def compute_distance(self, tiago_id):
