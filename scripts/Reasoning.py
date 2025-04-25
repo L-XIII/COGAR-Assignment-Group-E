@@ -313,7 +313,7 @@ class ReasoningController:
         point_msg = Point()
         point_msg.x = position[0]
         point_msg.y = position[1]
-        point_msg.z = 0.0  # Assuming table height is 0
+        point_msg.z = 0.7  # Assuming table height is 70 cm.
 
         self.target_position_publisher.publish(point_msg)
 
