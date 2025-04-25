@@ -64,8 +64,8 @@ class PerceptionSystem():
     
     def perception(self):
         """
-        Choose which kind of perception operation to effectuate depending on the order and the phase the robot is in
-        Return "True" if the relevant localization has been successful and "False" if not
+        Choose which kind of perception operation to effectuate depending on the order and the phase the robot is in.
+        Return "True" if the relevant localization has been successful and "False" if not.
         """
         self.order_phase = self.tiago.order_phase
         self.dish = self.tiago.dish
@@ -82,10 +82,10 @@ class PerceptionSystem():
     
     def verification_of_grasping_and_placement(self, operation):
         """
-        - The parameter of the method "operation" indicates of which kind of operation we want to check the sucess
-        - If it is a "placement" operation : there are 80% chance of success and the method returns "True" if the operation is a success and "False" if not
-        - If it is a "grasping" operation : there are 90% chance of success and the method returns "True" if the operation is a success and "False" if not
-        - If the type of the operation is nether "placement" nor grasping, it returns "Target unknown"
+        - The parameter of the method "operation" indicates of which kind of operation we want to check the sucess:
+        - If it is a "placement" operation : there are 80% chance of success and the method returns "True" if the operation is a success and "False" if not.
+        - If it is a "grasping" operation : there are 90% chance of success and the method returns "True" if the operation is a success and "False" if not.
+        - If the type of the operation is nether "placement" nor grasping, it returns "Target unknown".
         """
         
         if operation == "placement":
