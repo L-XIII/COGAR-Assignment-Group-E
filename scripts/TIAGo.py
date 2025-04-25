@@ -163,7 +163,7 @@ class TIAGo():
                 if placement_problem or client_problem:
                     if placement_problem:
                         rospy.logwarn(f"TIAGo {self.id} had trouble placing dish {self.dish} at table {self.target_table}")
-                    if client_problem:
+                    elif client_problem:
                         rospy.logwarn(f"TIAGo {self.id} received complaint from customer: {client_problem}")
                 else:
                     rospy.loginfo(f"TIAGo {self.id} successfully delivered {self.dish} to table {self.target_table}")
