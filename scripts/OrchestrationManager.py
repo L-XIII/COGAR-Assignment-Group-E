@@ -164,10 +164,19 @@ class OrchestrationManager():
     
     def manage_availability(self,msg):
         """
-        Store the id and the availability of the tiago in the dictionnary dictTIAGoAvailability
+        Extract the availability of the TIAGo robots and verify if it is either equal to "available" or "occupied".
+        If that the case, it store the id and the availability of the tiago in the dictionnary dictTIAGoAvailability.
+        If that is not the case, it add an error message to the list of error messages non yet published and increase the counter of messages non published.
+
+        Exemples of messages received: "TIAGo 1 : occupied", "TIAGo 4 : available"
         """
         tiago_id = int(msg.data[6])
         tiago_availabiliy = msg.data[10:]
+
+        if tiago_availabiliy != "available" and tiago_availabiliy != "occupied":
+            self.error_occured+=1
+            self.error_messages.append(msg.data + " , Problem : Unknown status.")
+            return None
 
         self.dictTIAGoAvailable[tiago_id] = tiago_availabiliy
 
@@ -176,6 +185,8 @@ class OrchestrationManager():
     def manage_position(self,msg):
         """
         Store the id and the position of the tiago in the dictionnary dictTIAGoPosition
+
+        Exemple of message received : "Position message sent by the TIAGo platform n°4: (14.53, 12.14)
         """
         tiago_id = msg.z
         tiago_abscysse = msg.x
@@ -185,22 +196,22 @@ class OrchestrationManager():
 
         return None
     
-    def compute_distance(self,table_number, tiago_id):
+    def compute_distance(self, tiago_id):
         """
-        Compute the distance between a TIAGo robot and the table where the task has to be accomplished
+        Compute the distance between a TIAGo robot and the serving area
         """
         tiago_x = self.dictTIAGoPosition[tiago_id][0]
         tiago_y = self.dictTIAGoPosition[tiago_id][1]
 
-        table_x = self.table_coords[table_number][0]
-        table_y = self.table_coords[table_number][1]
+        serving_area_x = self.service_area_coords[0]
+        serving_area_y = self.service_area_coords[1]
         
-        distance = math.sqrt((tiago_x-table_x)**2+(tiago_y-table_y)**2)
+        distance = math.sqrt((tiago_x-serving_area_x)**2+(tiago_y-serving_area_y)**2)
         return distance
     
     def assign_order(self):
         """
-        Method that takes the first order of the order queue and sends it to the nearest available robot.
+        Method that takes the first order of the order queue and sends it to the available robot which is closer to the serving area.
         Example of message sent: "TIAGo n°3, table : 37, dish : Gunkan"
         """
         if not self.orderQueue:
@@ -213,7 +224,7 @@ class OrchestrationManager():
         distance_min = 1000  # Distance greater than the maximum possible in the restaurant
 
         for tiago_id_available in self.dictTIAGoAvailable.keys():
-            distance = self.compute_distance(table_number, tiago_id_available)
+            distance = self.compute_distance(tiago_id_available)
             if distance < distance_min:
                 tiago_id = tiago_id_available
                 distance_min = distance

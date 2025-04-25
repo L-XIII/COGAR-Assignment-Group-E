@@ -1,0 +1,68 @@
+1)The architecture component diagram with accurate description detailing where different design
+patters could play a role in the final architecture implementation.
+
+2)For each component list their interfaces and describe them according to the component-based
+software architecture paradigm (i.e., stateless/statefull, data/service, strongly-typed/loosely-typed,
+etc).
+
+3)Define the KPI of the main components :
+
+Crtieria evaluated
+Correctness and Functionality
+ • Performances and Efficiency
+ • Scalability/Extensibility
+ • Reliability and Fault Tolerance
+ • Interoperability/Communication
+ • Security/Robustness
+
+Does the software behave as expected in normal and edge cases?
+Do all components interact correctly ?
+Can the system handle unexpected/malicious inputs?
+
+ • Orchestration Manager:
+
+	The criteria that will be evaluated for this component will be the correctness and functionality, the security and robustness.
+
+Main key performance indicators (KPIs):
+
+ • Orders handling:
+
+	- Percentage of order sent by the points of sale successfully received by the Orchestration Manager: computed by taking the ratio between the number of orders received by the Orchestration Manager and the number of orders sent by the points of sale and by multiplying the total by 100. By computing this parameters, one can verify if the Orchestration Manager successfully receives every order messages published by the points of sales. 
+ 
+	- Percentage of incorrect orders received and successfully analyzed: computed by taking the ratio between the number of incorrect orders correctly processed and the number of incorrect orders received and by multiplying the total by 100. By sending deliberately wrong orders and computing this parameter, one can effectively assess the robustness of the Orchestration Manager's order handling is case of unexpected errors in the order sent by the point of sales.
+ 
+	- Percentage of correct orders correctly analyzed: computed by taking the ratio between the number of correct orders correctly processed and the number of correct orders received and by multiplying the total by 100. By computing this parameter, one can assess how well the Orchestration Manager analyzes correct orders and proceed in nominal conditions.
+
+ • Handling of the availability updates of the TIAGo robots:
+
+	- Percentage of availability messages sent by the TIAGo robots successfully received by the Orchestration Manager: computed by taking the ratio between the number of availability messages received by the Orchestration Manager and the number of availability message sent by the TIAGo robots and by multiplying the total by 100. By computing this parameters, one can verify if the Orchestration Manager successfully receives every availability messages published by the TIAGo robots. 
+
+	- Percentage of correct availability messages successfully analyzed: computed by taking the ratio between the number of correct availability messages successfully analyzed by the Orchestration Manager and the number of correct availability messages received by the Orchestration Manager and by multiplying the total by 100. By computing this number, one can verify if the statuses of the TIAGo robots are correctly processed in the nominal conditions. 
+
+	- Percentage of incorrect availability messages generating the publication of an error message: computed by taking the ratio between the number of incorrect availability messages generating the publication of an error message and the number of incorrect availability messages received by the Orchestration Manager and by multiplying the total by 100. By computing this number, one can verify if the Orchestration efficiently raises error messages in the case of a TIAGo robot updating him with a wrong status. 
+
+ • Handling of the position updates of the TIAGo robots:
+
+	- Percentage of position messages sent by the TIAGo robots successfully received by the Orchestration Manager: computed by taking the ratio between the number of position messages received by the Orchestration Manager and the number of position messages sent by the TIAGo robots and by multiplying the total by 100. By computing this parameters, one can verify if the Orchestration Manager successfully receives every position messages published by the TIAGo robots. 
+
+	- Percentage of correct position messages successfully analyzed: computed by taking the ratio between the number of correct position messages successfully analyzed by the Orchestration Manager and the number of correct position messages received by the Orchestration Manager and by multiplying the total by 100. By correct position messages, we mean that the position tuple received does not give the robot a position where some parts of it intersects with a wall or a table. By computing this number, one can verify if the positions of the TIAGo robots are correctly processed and updated in the nominal conditions. 
+
+	- Percentage of incorrect position messages generating the publication of an error message: computed by taking the ratio between the number of incorrect position messages generating the publication of an error message and the number of incorrect position messages received by the Orchestration Manager and by multiplying the total by 100. By computing this number, one can verify if the Orchestration efficiently raises error messages in the case of a TIAGo robot updating him with a position which make it intersect with a wall or a table, both these situation being physically impossible. 
+
+• Distance computation: 
+
+	- Percentage of distances computed correctly: computed by taking the ratio of the number of correctly computed distances over the number of distances computed, the total multiplied by 100. By computing this parameter, one can verify if the Orchestration Manager computes successfully the distance between two objects. This ability is essential for giving the orders to optimal TIAGo robot. 
+
+
+• Publication of orders to the TIAGo robots:
+
+	- Idleness coefficient: computed by taking the minimum between the number of TIAGo robots available at the end of a loop and the number of orders that remains to be given to a TIAGo robot. The lower this parameter, the better the order publication ability of the Orchestration Manager. If this parameter is greater than zero, it means that it remains at least one TIAGo robot available and at least one order that has to be given at the end of the control loop, meaning that the Orchestration Manager is not performing correctly
+
+
+ • Reasoning About Food Placement : 
+
+ • Order Verification and Error Handling :
+
+4)The description of the integration testing KPIs and the obtained result
+
+4)
