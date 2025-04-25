@@ -101,29 +101,22 @@ class OrchestrationManager():
         #Extraction of the table number
         index_order = 8 
         table_number = msg.data[8]
-
-        if msg.data[9] != " " and msg.data[9] != ",":  # Check for space OR comma
-            # If the next character is not space or comma, it's part of the table number
+        if msg.data[9] != " " and msg.data[9] != ",":  
             table_number = msg.data[8:10]
             index_order = 9 
-        
-        # Remove any non-digit characters (like commas)
         table_number = ''.join(c for c in table_number if c.isdigit())
         table_number = int(table_number)
-
         index_order += 9 #We skip the ", dish : " part of the message
 
         #Extraction of the dish name
         index_order += 1 
         index_order_beginning_dish = index_order
-        dish = msg.data[index_order]       
-        while msg.data[index_order] != " ":
-            dish = msg.data[index_order_beginning_dish:index_order+1]
-            index_order+=1
+        while msg.data[index_order] not in (" ", ","):
+            index_order += 1
+        dish = msg.data[index_order_beginning_dish:index_order]
         
         #Extraction of the priority
         priority = int(msg.data[-1])
-
         return table_number, dish, priority, msg.data
     
     def order_storing(self, msg):
@@ -146,7 +139,7 @@ class OrchestrationManager():
             self.error_messages.append(message + " , Problem : Unknown table number")
             return None
         
-        if table_number not in range(0, 3,1):
+        if priority not in range(0, 3,1):
             self.error_occured+=1
             self.error_messages.append(message + " , Problem : Unknown priority")
             return None
@@ -176,7 +169,6 @@ class OrchestrationManager():
             return None
         tiago_id = int(id_part[1])
         tiago_availabiliy = parts[1].strip()
-        rospy.loginfo(f"Received availability from TIAGo {tiago_id}: {tiago_availabiliy}")
         self.dictTIAGoAvailable[tiago_id] = tiago_availabiliy
         return None
 
@@ -187,7 +179,7 @@ class OrchestrationManager():
         tiago_id = int(msg.z)  # Ensure TIAGo ID is an integer
         tiago_abscysse = msg.x
         tiago_ordinate = msg.y
-        rospy.loginfo(f"Received position from TIAGo {tiago_id}: ({tiago_abscysse}, {tiago_ordinate})")
+        # rospy.loginfo(f"Received position from TIAGo {tiago_id}: ({tiago_abscysse}, {tiago_ordinate})")
         self.dictTIAGoPosition[tiago_id] = [tiago_abscysse, tiago_ordinate]
         return None
     
@@ -195,6 +187,11 @@ class OrchestrationManager():
         """
         Compute the distance between a TIAGo robot and the serving area
         """
+        # Check if the TIAGo position exists in the dictionary
+        if tiago_id not in self.dictTIAGoPosition:
+            rospy.logwarn(f"No position data for TIAGo {tiago_id}, using default position")
+            return 1000  # Return a large distance so it's unlikely to be chosen
+            
         tiago_x = self.dictTIAGoPosition[tiago_id][0]
         tiago_y = self.dictTIAGoPosition[tiago_id][1]
 
@@ -212,22 +209,37 @@ class OrchestrationManager():
         if not self.orderQueue:
             rospy.logwarn("No orders available to assign")
             return None
+            
+        # Check for available robots
+        available_robots = [id for id, status in self.dictTIAGoAvailable.items() if status == "available"]
+        if not available_robots:
+            rospy.logwarn("No available robots to assign order")
+            return None
+            
         order_data = self.orderQueue[0]
         table_number, dish = order_data[0], order_data[1]
 
         tiago_id = 0
         distance_min = 1000  # Distance greater than the maximum possible in the restaurant
 
-        for tiago_id_available in self.dictTIAGoAvailable.keys():
+        for tiago_id_available in available_robots:
             distance = self.compute_distance(tiago_id_available)
             if distance < distance_min:
                 tiago_id = tiago_id_available
                 distance_min = distance
+                
+        if tiago_id == 0:
+            rospy.logwarn("Failed to select a robot for order assignment")
+            return None
 
         order_msg = "TIAGo n°" + str(tiago_id) + ", table : " + str(table_number) + ", dish : " + dish
-        rospy.loginfo("Order sent by the orchestration manager : " + order_msg)
         self.publisher_order.publish(order_msg)
-
+        
+        # Mark the selected TIAGo as occupied and remove the order from queue
+        self.dictTIAGoAvailable[tiago_id] = "occupied"
+        self.orderQueue.pop(0)
+        
+        rospy.loginfo(f"TIAGo {tiago_id} has been assigned to the order by the orchetration manager")
         return None
     
     def send_error_messages(self):
