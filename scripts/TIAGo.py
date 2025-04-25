@@ -6,6 +6,7 @@ from geometry_msgs.msg import Point
 
 from PerceptionSystem import PerceptionSystem
 from OrderVerificationSystem import OrderVerificationSystem
+from NavigationSystem import NavigationSystem
 
 
 class TIAGo():
@@ -46,6 +47,7 @@ class TIAGo():
         # Generation of the different modules of the TIAGo platform
         self.perception_system = PerceptionSystem(self)
         self.order_verificatiion_system = OrderVerificationSystem(self)
+        self.navigation_system = NavigationSystem(self)
         
         # Creation of the availability publisher that will publish String messages to the 'availability' topic
         self.publisher_availability = rospy.Publisher('availability', String, queue_size=10)
@@ -131,8 +133,47 @@ class TIAGo():
             
         return None
     
-    def go_to(self,location):
-        pass
+    def go_to(self, location):
+        """
+        Navigate the robot to the specified location using the navigation system
+        location: [x, y, width, height] coordinates
+        """
+        if not location:
+            rospy.logwarn(f"TIAGo {self.id}: Invalid location for navigation")
+            return False
+        
+        # Extract the target coordinates from the location (center of the area)
+        target_x = location[0] + location[2] / 2
+        target_y = location[1] + location[3] / 2
+        
+        # Request navigation to target position
+        self.navigation_system.navigate_to([target_x, target_y])
+        
+        # Simulate movement by updating position gradually
+        steps = 5  # Number of steps to simulate movement
+        start_x, start_y = self.x, self.y
+        dx = (target_x - start_x) / steps
+        dy = (target_y - start_y) / steps
+        
+        for i in range(steps):
+            # Update position incrementally
+            self.x += dx
+            self.y += dy
+            
+            # Send position updates
+            self.send_position()
+            rospy.sleep(0.2)  # Simulate movement time
+            
+            # Update the navigation system with our new position
+            if hasattr(self.navigation_system, 'slam') and self.navigation_system.slam:
+                self.navigation_system.slam.robot_pose = [self.x, self.y, 0]  # Update SLAM's position data
+        
+        # Final position update to ensure accuracy
+        self.x = target_x
+        self.y = target_y
+        self.send_position()
+        
+        return True
 
     def operation(self):
         """
@@ -141,28 +182,30 @@ class TIAGo():
 
         if self.status == "occupied" and self.dish != "clearing":
             #The TIAGo robot is doing a serving operation
-            if self.order_phase ==  1 :
+            if self.order_phase == 1:
                 #Entering phase 1 : the TIAGo robot has to go to the service area
-                perception_result = self.perception_system.perception()
-                if not perception_result:
-                    rospy.logwarn(f"TIAGo {self.id} detected obstacle during navigation to service area and avoided it")
-                self.order_phase = 2
+                if self.go_to(self.service_area_coords):
+                    perception_result = self.perception_system.perception()
+                    if not perception_result:
+                        rospy.logwarn(f"TIAGo {self.id} detected obstacle during navigation to service area and avoided it")
+                    self.order_phase = 2
 
-            elif self.order_phase ==  2 :
+            elif self.order_phase == 2:
                 #Entering phase 2 : the TIAGo robot has to take the right plate
                 perception_result = self.perception_system.perception()
                 if not perception_result:
                     rospy.logwarn(f"TIAGo {self.id} failed to grasp dish {self.dish} and tried again")
                 self.order_phase = 3
 
-            elif self.order_phase ==  3 :
+            elif self.order_phase == 3:
                 #Entering phase 3 : the TIAGo robot has to go to the table where it will have to serve the dish
-                perception_result = self.perception_system.perception()
-                if not perception_result:
-                    rospy.logwarn(f"TIAGo {self.id} detected obstacle during navigation to table {self.target_table} and avoided it")
-                self.order_phase = 4
+                if self.go_to(self.table_coords[self.target_table]):
+                    perception_result = self.perception_system.perception()
+                    if not perception_result:
+                        rospy.logwarn(f"TIAGo {self.id} detected obstacle during navigation to table {self.target_table} and avoided it")
+                    self.order_phase = 4
 
-            elif self.order_phase ==  4 :
+            elif self.order_phase == 4:
                 #Entering phase 4 : the TIAGo robot has to serve the plate and to see if the client has some reclamationscomplaints 
                 perception_result = self.perception_system.perception()
                 if not perception_result:
@@ -175,7 +218,7 @@ class TIAGo():
                 if placement_problem or client_problem:
                     if placement_problem:
                         rospy.logwarn(f"TIAGo {self.id} had trouble placing dish {self.dish} at table {self.target_table}")
-                    elif client_problem:
+                    if client_problem:
                         rospy.logwarn(f"TIAGo {self.id} received complaint from customer: {client_problem}")
                         if client_problem == "empty_plates":                            
                             self.dish = "clearing"
@@ -187,59 +230,74 @@ class TIAGo():
                 
                 self.order_phase = 5
 
-            elif self.order_phase ==  5 :
+            elif self.order_phase == 5:
                 #Entering phase 5 : the TIAGo robot has to come back to the service area 
-                perception_result = self.perception_system.perception()
-                if not perception_result:
-                    rospy.logwarn(f"TIAGo {self.id} detected obstacle during return to service area and avoided it")
+                if self.go_to(self.service_area_coords):
+                    perception_result = self.perception_system.perception()
+                    if not perception_result:
+                        rospy.logwarn(f"TIAGo {self.id} detected obstacle during return to service area and avoided it")
 
-                rospy.loginfo(f"TIAGo {self.id} returned to service area")
-                self.status = "available"
-                self.order_phase = 0
-                self.target_table = None
-                self.dish = None
-                self.send_availability()
+                    rospy.loginfo(f"TIAGo {self.id} returned to service area")
+                    self.status = "available"
+                    self.order_phase = 0
+                    self.target_table = None
+                    self.dish = None
+                    self.send_availability()
 
-        if self.status == "occupied" and self.dish == "clearing":
+        elif self.status == "occupied" and self.dish == "clearing":
             #The TIAGo robot is doing a clearing operation
-            if self.order_phase ==  1 :
-                #Entering phase 1 : the TIAGo robot is already at the table to clean away the empty plates
-                self.order_phase = 2
+            if self.order_phase == 1:
+                #Entering phase 1 : the TIAGo robot has to go to the table where is located the empty plate it has to remove
+                if self.go_to(self.table_coords[self.target_table]):
+                    self.order_phase = 2
 
-            elif self.order_phase ==  2 :
+            elif self.order_phase == 2:
                 #Entering phase 2 : the TIAGo robot has to take the empty plate
                 perception_result = self.perception_system.perception()
                 if not perception_result:
-                    rospy.logwarn(f"TIAGo {self.id} failed to grasp dish {self.dish} and tried again")
+                    rospy.logwarn(f"TIAGo {self.id} failed to grasp empty plates and tried again")
                 self.order_phase = 3
 
-            elif self.order_phase ==  3 :
+            elif self.order_phase == 3:
                 #Entering phase 3 : the TIAGo robot has to go to the cleaning area
+                if self.go_to(self.washing_area_coords):
+                    perception_result = self.perception_system.perception()
+                    if not perception_result:
+                        rospy.logwarn(f"TIAGo {self.id} detected obstacle during navigation to cleaning area and avoided it")
+                    self.order_phase = 4
+
+            elif self.order_phase == 4:
+                #Entering phase 4 : the TIAGo robot has to put down the plate
                 perception_result = self.perception_system.perception()
                 if not perception_result:
-                    rospy.logwarn(f"TIAGo {self.id} detected obstacle during navigation to cleaning area and avoided it")
-                self.order_phase = 4
-
-            elif self.order_phase ==  4 :
-                #Entering phase 4 : the TIAGo robot has to just put down the plate at the cleaning area
+                    rospy.logwarn(f"TIAGo {self.id} had difficulty finding suitable placement spot")
+                else:
+                    rospy.loginfo(f"TIAGo {self.id}: Successfully placed empty plates in cleaning area")
                 self.order_phase = 5
 
-            elif self.order_phase ==  5 :
+            elif self.order_phase == 5:
                 #Entering phase 5 : the TIAGo robot has to come back to the service area 
-                perception_result = self.perception_system.perception()
-                if not perception_result:
-                    rospy.logwarn(f"TIAGo {self.id} detected obstacle during return to service area and avoided it")
+                if self.go_to(self.service_area_coords):
+                    perception_result = self.perception_system.perception()
+                    if not perception_result:
+                        rospy.logwarn(f"TIAGo {self.id} detected obstacle during return to service area and avoided it")
 
-                rospy.loginfo(f"TIAGo {self.id} returned to service area")
-                self.status = "available"
-                self.order_phase = 0
-                self.target_table = None
-                self.dish = None
-                self.send_availability()
+                    rospy.loginfo(f"TIAGo {self.id} returned to service area")
+                    self.status = "available"
+                    self.order_phase = 0
+                    self.target_table = None
+                    self.dish = None
+                    self.send_availability()
 
+        elif self.status == "available":
+            # If not occupied, maintain position at service area
+            if (abs(self.x - (self.service_area_coords[0] + self.service_area_coords[2]/2)) > 0.1 or 
+                abs(self.y - (self.service_area_coords[1] + self.service_area_coords[3]/2)) > 0.1):
+                self.go_to(self.service_area_coords)
 
-        else:
-            self.go_to(self.service_area_coords)
+        # Update navigation system
+        if hasattr(self.navigation_system, 'update'):
+            self.navigation_system.update()
 
         return None
     

@@ -300,7 +300,6 @@ class TrajectoryController:
         """
         self.goal = [goal_msg.pose.position.x, goal_msg.pose.position.y]
         self.reached_goal = False
-        rospy.loginfo(f"New goal set: {self.goal}")
 
         # Plan trajectory toward the goal
         self.plan_trajectory()
@@ -366,7 +365,6 @@ class TrajectoryController:
         if distance < 0.1:  # Threshold in meters
             self.reached_goal = True
             self.stop_motors()
-            rospy.loginfo("Goal reached")
             return
 
         desired_theta = math.atan2(dy, dx)
