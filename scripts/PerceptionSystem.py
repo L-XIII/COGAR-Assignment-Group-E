@@ -30,9 +30,9 @@ class PerceptionSystem():
 
     def perception_for_navigation(self):
         """
-        Use the Bernoulli probability to generate an obstacle in front of the robot (10% chance of having an obstale in front of the robot)
+        Use the Bernoulli probability to generate an obstacle in front of the robot (1% chance of having an obstale in front of the robot)
         """
-        obstacle_detected = bernoulli_proba(10)
+        obstacle_detected = bernoulli_proba(99)
         
         return obstacle_detected
 
@@ -54,11 +54,11 @@ class PerceptionSystem():
         else:
             #Serving operation
             if self.order_phase == 2: 
-                #Phase 2 of the serving order : the TIAGo Robot has to take the required_plate - 80% chance to locate the plate
+                #Phase 2 of the serving order : the TIAGo Robot has to take the required_plate - 99% chance to locate the plate
                 plate_located = bernoulli_proba(99)
                 return plate_located
             else:
-                #Phase 4 of the serving order : the TIAGo Robot has put down the empty plate - 70% chance to locate a free spot on the table
+                #Phase 4 of the serving order : the TIAGo Robot has put down the plate - 99% chance to locate a free spot on the table
                 free_spot_located = bernoulli_proba(99)
                 return free_spot_located
     
@@ -77,7 +77,7 @@ class PerceptionSystem():
         
         if self.order_phase in [2,4]:
             #Grasping phase, we use the perception system for reasoning about the food placement and 
-            self.perception_for_grasping_and_placement()
+            localization = self.perception_for_grasping_and_placement()
             return localization
     
     def verification_of_grasping_and_placement(self, operation):

@@ -143,18 +143,30 @@ class TIAGo():
             #The TIAGo robot is doing a serving operation
             if self.order_phase ==  1 :
                 #Entering phase 1 : the TIAGo robot has to go to the service area
+                perception_result = self.perception_system.perception()
+                if not perception_result:
+                    rospy.logwarn(f"TIAGo {self.id} detected obstacle during navigation to service area and avoided it")
                 self.order_phase = 2
 
             elif self.order_phase ==  2 :
                 #Entering phase 2 : the TIAGo robot has to take the right plate
+                perception_result = self.perception_system.perception()
+                if not perception_result:
+                    rospy.logwarn(f"TIAGo {self.id} failed to grasp dish {self.dish} and tried again")
                 self.order_phase = 3
 
             elif self.order_phase ==  3 :
                 #Entering phase 3 : the TIAGo robot has to go to the table where it will have to serve the dish
+                perception_result = self.perception_system.perception()
+                if not perception_result:
+                    rospy.logwarn(f"TIAGo {self.id} detected obstacle during navigation to table {self.target_table} and avoided it")
                 self.order_phase = 4
 
             elif self.order_phase ==  4 :
                 #Entering phase 4 : the TIAGo robot has to serve the plate and to see if the client has some reclamationscomplaints 
+                perception_result = self.perception_system.perception()
+                if not perception_result:
+                    rospy.logwarn(f"TIAGo {self.id} had difficulty finding suitable placement spot")
                 rospy.loginfo(f"TIAGo {self.id} is interacting with customer at table {self.target_table}")
                 potential_problems = self.order_verificatiion_system.verify_delivery_client()
                 
@@ -172,6 +184,10 @@ class TIAGo():
 
             elif self.order_phase ==  5 :
                 #Entering phase 5 : the TIAGo robot has to come back to the service area 
+                perception_result = self.perception_system.perception()
+                if not perception_result:
+                    rospy.logwarn(f"TIAGo {self.id} detected obstacle during return to service area and avoided it")
+
                 rospy.loginfo(f"TIAGo {self.id} returned to service area")
                 self.status = "available"
                 self.order_phase = 0
