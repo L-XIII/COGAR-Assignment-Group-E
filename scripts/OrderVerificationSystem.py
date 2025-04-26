@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-from SpeechInterface import SpeechInterface
+try:
+    from scripts.SpeechInterface import SpeechInterface
+except ImportError:
+    from SpeechInterface import SpeechInterface
 
 class OrderVerificationSystem:
     """

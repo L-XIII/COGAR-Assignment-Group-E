@@ -2,7 +2,10 @@
 
 import random
 
-from PerceptionSystem import bernoulli_proba
+try:
+    from scripts.PerceptionSystem import bernoulli_proba
+except ImportError:
+    from PerceptionSystem import bernoulli_proba
 
 
 class SpeechInterface:
