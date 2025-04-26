@@ -1,0 +1,664 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architecture Overview &mdash; COGAR Sushi resturant V1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=9ced427e"></script>
+      <script src="_static/doctools.js?v=888ff710"></script>
+      <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Orchestration Manager" href="components/orchestration_manager.html" />
+    <link rel="prev" title="Welcome to COGAR Sushi resturant’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            COGAR Sushi resturant
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#component-diagram">Component Diagram</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#description">Description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#components-interfaces-discription">Components Interfaces discription</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pointofsale-pos">PointOfSale (POS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#orchestrationmanager">OrchestrationManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tiago-main-robot">TIAGo (Main Robot)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#perceptionsystem">PerceptionSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#navigationsystem">NavigationSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#manipulationsystem">ManipulationSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reasoningsystem">ReasoningSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#orderverificationsystem">OrderVerificationSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#speechinterface">SpeechInterface</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="components/orchestration_manager.html">Orchestration Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components/reasoning_food_placement.html">Reasoning About Food Placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components/order_verification.html">Order Verification &amp; Error Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">KPI’s Integration Testing</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">COGAR Sushi resturant</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Architecture Overview</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/architecture.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="architecture-overview">
+<h1>Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permalink to this heading"></a></h1>
+<section id="component-diagram">
+<h2>Component Diagram<a class="headerlink" href="#component-diagram" title="Permalink to this heading"></a></h2>
+<figure class="align-center" id="id1">
+<img alt="System Component Diagram" src="_images/Component_diagram_E.png" />
+<figcaption>
+<p><span class="caption-text">Fig. 1: Component diagram of the Sushi Resturant</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Permalink to this heading"></a></h2>
+<p>How different design
+patters could play a role in the final architecture implementation?</p>
+<p><strong>Singleton Pattern</strong></p>
+<p>The singleton pattern is used when a class must have only one instance in a whole system.
+It is rather easy to find a relevant usage of this pattern in the case of a sushi restaurant where the delivery is assured by autonomous robots.
+In our case, all the TIAGo robots are managed by a unique orchestration manager (although the component diagram shows only one TIAGo robot for the sake of simplicity…).
+Therefore, we have to ensure that the Python class describing the Orchestration Manager can have only one instance.</p>
+<blockquote>
+<div><p>Our code implements the singleton pattern to address this issue. By doing this, we ensure that there cannot be two instances of the Orchestration Manager class giving orders at the same time, disrupting the proper functioning of the restaurant.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>In the same way, each TIAGo robot has a unique Manipulation System to control its actuators, a unique Navigation System to manage the trajectory planning, a unique Order Verification System to verify that the orders have been correctly executed, and a unique system to reason about the food placement.</dt><dd><p>We have therefore implemented the singleton pattern for each of these systems.</p>
+</dd>
+</dl>
+<p><strong>Adapter Pattern</strong></p>
+<p>The adapter pattern is used as a sort of software bridge that allows objects with incompatible interfaces to work and interact together. We can find several places to use it in our architecture.</p>
+<ul class="simple">
+<li><p>Firstly, the adapter pattern can be potentially used in the Manipulation System to transform the data coming from the force sensors and the sensors integrated to the joint actuators into data that the other components of the system can understand.</p></li>
+<li><p>Secondly, it can also be integrated - with a higher level of complexity - into the Speech Interface, for example, to transform the recordings of what the clients say into words so that an analysis component can determine the meaning of what the clients tell the robots.</p></li>
+</ul>
+<p><strong>Mediator Pattern</strong></p>
+<dl class="simple">
+<dt>In our software architecture, the Orchestration Manager plays the role of the Mediator between the point of sale and the TIAGo robots by managing the communication between them. It boosts the efficiency of the whole system by assigning to each robot its task (every robot doesn’t have to determine if it is able to perform a task and if it is the best placed to perform the task), significantly decreasing the number of calculations that need to be performed by the whole system.</dt><dd><p>It also enhances the scalability because adding a new TIAGo platform or a new point of sale amounts just to adding a new ROS node.</p>
+</dd>
+</dl>
+<p><strong>Observer Pattern</strong></p>
+<p>In our software architecture, the Observer pattern is widely used, in the form of communication between modules via ROS. This kind of communication allows greater flexibility in terms of execution, suppressing the need for synchronization between the point of sale publishing frequency and the Orchestration Manager reading frequency, and between the [rest of the sentence seems cut off in the original text].</p>
+</section>
+<section id="components-interfaces-discription">
+<h2>Components Interfaces discription<a class="headerlink" href="#components-interfaces-discription" title="Permalink to this heading"></a></h2>
+<p>This section details the provided and required interfaces for each component in the system, describing their characteristics according to the component-based software architecture paradigm.</p>
+<section id="pointofsale-pos">
+<h3>PointOfSale (POS)<a class="headerlink" href="#pointofsale-pos" title="Permalink to this heading"></a></h3>
+<p><strong>Provided Interfaces:</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/orders</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes new customer orders.</p></li>
+<li><p><strong>Type:</strong> Data interface (publishes order data).</p></li>
+<li><p><strong>State:</strong> Stateless (each published order is independent).</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (uses <code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code> but contains structured data like <em>“Table : X, dish : Y, …”</em> within the string, requiring parsing).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="orchestrationmanager">
+<h3>OrchestrationManager<a class="headerlink" href="#orchestrationmanager" title="Permalink to this heading"></a></h3>
+<p><strong>Required Interfaces:</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/orders</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Subscribes to receive new orders from the POS.</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code>, see POS description).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/availability</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Subscribes to receive robot availability status.</p></li>
+<li><p><strong>Type:</strong> Data interface (receives robot state data).</p></li>
+<li><p><strong>State:</strong> Stateless (each message represents current status).</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (receives <code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code> like <em>“TIAGo X : available”</em>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/position</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Subscribes to receive robot positions.</p></li>
+<li><p><strong>Type:</strong> Data interface (receives robot state data).</p></li>
+<li><p><strong>State:</strong> Stateless (each message represents the current position).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (uses <code class="docutils literal notranslate"><span class="pre">geometry_msgs/Point</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Provided Interfaces:</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/order_TIAGo</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes specific task assignments to robots.</p></li>
+<li><p><strong>Type:</strong> Data interface (publishes order messages). Could also be seen as triggering a service via topic.</p></li>
+<li><p><strong>State:</strong> Stateless (each message is a new assignment).</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (uses <code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code> like <em>“TIAGo n°X, table : Y, dish : Z”</em>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/error_messages</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes error messages for staff/logging.</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless (each message is an independent error report).</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (uses <code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code>, typically unstructured text).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="tiago-main-robot">
+<h3>TIAGo (Main Robot)<a class="headerlink" href="#tiago-main-robot" title="Permalink to this heading"></a></h3>
+<p><strong>Required Interfaces:</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/order_TIAGo</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Subscribes to receive task assignments from OrchestrationManager.</p></li>
+<li><p><em>(See OrchestrationManager provided interfaces for details)</em>.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Provided Interfaces:</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/availability</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes its current status (“available” or “occupied”).</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/position</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes its current position (x, y) and ID (in z).</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">geometry_msgs/Point</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/orders</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes requests for table clearing (Note: Same topic name as POS output, ensure correct connection/namespacing in implementation).</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (uses <code class="docutils literal notranslate"><span class="pre">geometry_msgs/Point</span></code> - <em>Verify if this type is correct for a clearing request</em>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Internal Interfaces (Method Calls):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Calls methods on PerceptionSystem, OrderVerificationSystem, NavigationSystem, ManipulationSystem, ReasoningSystem.</dt><dd><ul>
+<li><p><strong>Type:</strong> Service interfaces.</p></li>
+<li><p><strong>State:</strong> Often stateful (triggering actions).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="perceptionsystem">
+<h3>PerceptionSystem<a class="headerlink" href="#perceptionsystem" title="Permalink to this heading"></a></h3>
+<p><strong>Provided Interfaces (Conceptual - via TIAGo method calls):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">perception_for_navigation()</span></code></dt><dd><ul>
+<li><p><strong>Description:</strong> Returns an obstacle detection boolean.</p></li>
+<li><p><strong>Type:</strong> Service interface (provides a computation result on demand).</p></li>
+<li><p><strong>State:</strong> Stateless (result depends only on current sensor simulation).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (returns a boolean).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">verification_of_grasping_and_placement(operation)</span></code></dt><dd><ul>
+<li><p><strong>Description:</strong> Returns a success boolean based on simulated probability.</p></li>
+<li><p><strong>Type:</strong> Service interface.</p></li>
+<li><p><strong>State:</strong> Stateless (result based on probability for the given operation).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (takes a string input, returns a boolean).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="navigationsystem">
+<h3>NavigationSystem<a class="headerlink" href="#navigationsystem" title="Permalink to this heading"></a></h3>
+<p><strong>Provided Interfaces (ROS Topics):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/mp</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes the occupancy grid map.</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateful (the map represents accumulated knowledge).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">nav_msgs/OccupancyGrid</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/robot_pose</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes the estimated robot pose.</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateful (pose depends on previous states).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">geometry_msgs/PoseStamped</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/trajectory</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes the planned path.</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless (represents the current plan for the current goal).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">nav_msgs/Path</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Required Interfaces (ROS Topics):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/goal</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Subscribes to receive navigation goals.</p></li>
+<li><p><strong>Type:</strong> Data interface (receives command data).</p></li>
+<li><p><strong>State:</strong> Stateless (each goal is independent).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">geometry_msgs/PoseStamped</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Sensor Topics (e.g., <code class="docutils literal notranslate"><span class="pre">/imu_data</span></code>, <code class="docutils literal notranslate"><span class="pre">/left_encoder</span></code>, <code class="docutils literal notranslate"><span class="pre">/right_encoder</span></code>, <code class="docutils literal notranslate"><span class="pre">/object_detection</span></code>, <code class="docutils literal notranslate"><span class="pre">/manipulation_status</span></code>)</dt><dd><ul>
+<li><p><strong>Description:</strong> Subscribes to various sensor data streams for SLAM/localization/navigation.</p></li>
+<li><p><strong>Type:</strong> Data interfaces.</p></li>
+<li><p><strong>State:</strong> Stateless (each message is current sensor reading).</p></li>
+<li><p><strong>Typing:</strong> Varies (Strongly or Loosely-typed depending on the specific sensor and message type).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Provided Interfaces (Method calls from TIAGo):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">navigate_to()</span></code></dt><dd><ul>
+<li><p><strong>Type:</strong> Service interface.</p></li>
+<li><p><strong>State:</strong> Stateful (triggers navigation behavior).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">update_map()</span></code>, <code class="docutils literal notranslate"><span class="pre">update_position()</span></code></dt><dd><ul>
+<li><p><strong>Type:</strong> Service interfaces.</p></li>
+<li><p><strong>State:</strong> Stateless (trigger updates based on current data).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">stop()</span></code></dt><dd><ul>
+<li><p><strong>Type:</strong> Service interface.</p></li>
+<li><p><strong>State:</strong> Stateless (triggers an immediate action).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="manipulationsystem">
+<h3>ManipulationSystem<a class="headerlink" href="#manipulationsystem" title="Permalink to this heading"></a></h3>
+<p><strong>Provided Interfaces (ROS Topics):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/force_data</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/Float32</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/motors_feedback</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateful (reflects motor state).</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code> containing structured data).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/safety_status</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateful.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code> representing an enum).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/manipulation_status</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateful.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code> representing an enum).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Required Interfaces (ROS Topics):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/gripper_commands</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Type:</strong> Data/Command interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/Float32</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/grasp_commands</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Type:</strong> Data/Command interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/Float32</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/joint_commands</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Type:</strong> Data/Command interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code> encoding positions).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/trajectory_commands</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Type:</strong> Data/Command interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code> encoding waypoints).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/target_dish_position</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">geometry_msgs/Point</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/force_data</span></code> (ROS Topic - Internal Subscription)</dt><dd><ul>
+<li><p><em>(See Provided Interfaces)</em></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/safety_status</span></code> (ROS Topic - Internal Subscription)</dt><dd><ul>
+<li><p><em>(See Provided Interfaces)</em></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/motors_feedback</span></code> (ROS Topic - Internal Subscription)</dt><dd><ul>
+<li><p><em>(See Provided Interfaces)</em></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/perception_data</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Generic placeholder for perception input needed for manipulation.</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Provided Interfaces (Method calls from TIAGo):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">execute_manipulation()</span></code></dt><dd><ul>
+<li><p><strong>Type:</strong> Service interface.</p></li>
+<li><p><strong>State:</strong> Stateful (triggers manipulation action).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="reasoningsystem">
+<h3>ReasoningSystem<a class="headerlink" href="#reasoningsystem" title="Permalink to this heading"></a></h3>
+<p><strong>Provided Interfaces:</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/target_dish_position</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes the calculated optimal position for the dish.</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless (result of a specific request).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed (<code class="docutils literal notranslate"><span class="pre">geometry_msgs/Point</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">reason_about_placement()</span></code> (Method call from TIAGo)</dt><dd><ul>
+<li><p><strong>Type:</strong> Service interface.</p></li>
+<li><p><strong>State:</strong> Stateless (performs calculation based on input).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Required Interfaces:</strong></p>
+<ul class="simple">
+<li><p><em>(Implicit)</em> Access to perception data, likely passed via the <code class="docutils literal notranslate"><span class="pre">reason_about_placement</span></code> method call rather than explicit ROS subscriptions shown here.</p></li>
+</ul>
+</section>
+<section id="orderverificationsystem">
+<h3>OrderVerificationSystem<a class="headerlink" href="#orderverificationsystem" title="Permalink to this heading"></a></h3>
+<p><strong>Required Interfaces:</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Access to TIAGo instance attributes (<code class="docutils literal notranslate"><span class="pre">perception_system</span></code>, <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">target_table</span></code>)</dt><dd><ul>
+<li><p><strong>Type:</strong> Internal interface / Dependency Injection.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">verify_delivery_client()</span></code> (Method call to SpeechInterface)</dt><dd><ul>
+<li><p><strong>Type:</strong> Service interface.</p></li>
+<li><p><strong>State:</strong> Stateful.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">verify_item_served()</span></code> (Method call to PerceptionSystem - <em>Note: Assumed method name</em>)</dt><dd><ul>
+<li><p><strong>Type:</strong> Service interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Provided Interfaces (Method calls from TIAGo):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">verify_served_order()</span></code></dt><dd><ul>
+<li><p><strong>Type:</strong> Service interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">verify_delivery_client()</span></code></dt><dd><ul>
+<li><p><strong>Type:</strong> Service interface.</p></li>
+<li><p><strong>State:</strong> Stateless (triggers the interaction).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Provided Interfaces (ROS Topic):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">/error_messages</span></code> (ROS Topic)</dt><dd><ul>
+<li><p><strong>Description:</strong> Publishes error messages related to verification failures.</p></li>
+<li><p><strong>Type:</strong> Data interface.</p></li>
+<li><p><strong>State:</strong> Stateless.</p></li>
+<li><p><strong>Typing:</strong> Loosely-typed (<code class="docutils literal notranslate"><span class="pre">std_msgs/String</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="speechinterface">
+<h3>SpeechInterface<a class="headerlink" href="#speechinterface" title="Permalink to this heading"></a></h3>
+<p><strong>Provided Interfaces (Method calls from OrderVerificationSystem):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">verify_delivery_client()</span></code></dt><dd><ul>
+<li><p><strong>Type:</strong> Service interface.</p></li>
+<li><p><strong>State:</strong> Stateful (manages conversation state).</p></li>
+<li><p><strong>Typing:</strong> Strongly-typed.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to COGAR Sushi resturant’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="components/orchestration_manager.html" class="btn btn-neutral float-right" title="Orchestration Manager" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GROUP-E.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

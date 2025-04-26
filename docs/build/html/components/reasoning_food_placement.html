@@ -1,0 +1,243 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reasoning About Food Placement &mdash; COGAR Sushi resturant V1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=9ced427e"></script>
+      <script src="../_static/doctools.js?v=888ff710"></script>
+      <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Order Verification &amp; Error Handling" href="order_verification.html" />
+    <link rel="prev" title="Orchestration Manager" href="orchestration_manager.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            COGAR Sushi resturant
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestration_manager.html">Orchestration Manager</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Reasoning About Food Placement</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#behavioral-diagram">Behavioral Diagram</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#description">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#unit-test-kpis">Unit Test KPIs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#analysis-of-table-layouts">Analysis of Table Layouts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analysis-of-risk-determination">Analysis of Risk Determination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analysis-of-message-transmission">Analysis of Message Transmission</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="order_verification.html">Order Verification &amp; Error Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Integration Testing</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">COGAR Sushi resturant</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Reasoning About Food Placement</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/components/reasoning_food_placement.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="reasoning-about-food-placement">
+<h1>Reasoning About Food Placement<a class="headerlink" href="#reasoning-about-food-placement" title="Permalink to this heading"></a></h1>
+<section id="behavioral-diagram">
+<h2>Behavioral Diagram<a class="headerlink" href="#behavioral-diagram" title="Permalink to this heading"></a></h2>
+<figure class="align-center" id="id1">
+<img alt="Reasoning Component Behavior Diagram" src="../_images/ReasoningAboutFoodPlacement.png" />
+<figcaption>
+<p><span class="caption-text">Fig. 3:  Reasoning_food_placement activity diagram.</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p><strong>Why activity diagram?</strong></p>
+<blockquote>
+<div><p>This component performs a defined  workflow: analyze table layout, identify free areas, evaluate potential spots based on criteria (stability, space), check for collisions, and finally determine the optimal placement coordinate. An Activity Diagram excels at showing the flow of activities, decision points, and inputs/outputs of such a process.</p>
+</div></blockquote>
+<section id="description">
+<h3>Description<a class="headerlink" href="#description" title="Permalink to this heading"></a></h3>
+<p>This activity diagram describes the process followed by the “Reasoning About Food Placement” component to determine a suitable target position for placing a dish on a table.</p>
+<p><strong>Inputs:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">perception</span> <span class="pre">data</span></code>: Information about the current state of the table (e.g., occupancy grid, object locations).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dish</span> <span class="pre">dimensions</span></code> (Data Store): Predefined dimensions of the dish to be placed.</p></li>
+</ul>
+<p><strong>Activity Flow:</strong></p>
+<ol class="arabic">
+<li><p><strong>Start:</strong> The process begins when triggered (e.g., by a request from the TIAGo robot).</p></li>
+<li><p><strong>Analyzing table:</strong> The component uses the <code class="docutils literal notranslate"><span class="pre">perception</span> <span class="pre">data</span></code> and <code class="docutils literal notranslate"><span class="pre">dish</span> <span class="pre">dimensions</span></code> to analyze the table surface.
+* <strong>Output:</strong> <code class="docutils literal notranslate"><span class="pre">free_areas</span></code> (A list of potential free areas, possibly empty if none are found).</p></li>
+<li><p><strong>Planning table placement:</strong> Based on the identified <code class="docutils literal notranslate"><span class="pre">free_areas</span></code>, the component plans potential placement spots.
+* <strong>Output:</strong> <code class="docutils literal notranslate"><span class="pre">optimal_spot</span></code> (Either <code class="docutils literal notranslate"><span class="pre">None</span></code> if no suitable spot is found, or data representing the best candidate spot).</p></li>
+<li><p><strong>Decision (optimal_spot != None?):</strong> Checks if a potential optimal spot was identified.
+* <strong>[False]:</strong> If <code class="docutils literal notranslate"><span class="pre">optimal_spot</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, the feasibility is set (<code class="docutils literal notranslate"><span class="pre">feasible_bool</span> <span class="pre">=</span> <span class="pre">False</span></code>) and the flow proceeds to the final decision node.
+* <strong>[True]:</strong> If an <code class="docutils literal notranslate"><span class="pre">optimal_spot</span></code> was found:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt><strong>Computing minimal distance with object on the table:</strong> Calculates the minimum distance between the proposed placement spot and existing objects on the table using <code class="docutils literal notranslate"><span class="pre">perception</span> <span class="pre">data</span></code>.</dt><dd><ul>
+<li><p><strong>Output:</strong> <code class="docutils literal notranslate"><span class="pre">min_distance</span></code> (The calculated minimum distance).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Computing the risk of a placement operation:</strong> Assesses the risk associated with placing the dish at the <code class="docutils literal notranslate"><span class="pre">optimal_spot</span></code>, considering the <code class="docutils literal notranslate"><span class="pre">min_distance</span></code> and potentially other factors (like stability).</dt><dd><ul>
+<li><p><strong>Output:</strong> <code class="docutils literal notranslate"><span class="pre">feasible_bool</span></code> (A boolean indicating if the placement is considered safe/feasible).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p><strong>Decision (feasible?):</strong> Checks the result of the risk assessment.
+* <strong>[False]:</strong> If the placement is not feasible (<code class="docutils literal notranslate"><span class="pre">feasible_bool</span></code> is False), the flow proceeds to the end state with no target position.
+* <strong>[True]:</strong> If the placement is feasible (<code class="docutils literal notranslate"><span class="pre">feasible_bool</span></code> is True):</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt><strong>Computing the target position:</strong> Calculates the precise coordinates for the placement.</dt><dd><ul>
+<li><p><strong>Output:</strong> <code class="docutils literal notranslate"><span class="pre">target_position</span></code> (Coordinates [float, float]).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><strong>Publishing the target position:</strong> Makes the calculated <code class="docutils literal notranslate"><span class="pre">target_position</span></code> available (e.g., publishes it on the <code class="docutils literal notranslate"><span class="pre">/target_dish_position</span></code> ROS topic).</p></li>
+<li><p>Proceeds to the final success state.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p><strong>End:</strong> The activity concludes. Depending on the path taken, either a feasible <code class="docutils literal notranslate"><span class="pre">target_position</span></code> has been published, or the process determined that no suitable placement could be found (implicitly resulting in <code class="docutils literal notranslate"><span class="pre">target_position:</span> <span class="pre">None</span></code>).</p></li>
+</ol>
+</section>
+</section>
+<section id="unit-test-kpis">
+<h2>Unit Test KPIs<a class="headerlink" href="#unit-test-kpis" title="Permalink to this heading"></a></h2>
+<section id="analysis-of-table-layouts">
+<h3>Analysis of Table Layouts<a class="headerlink" href="#analysis-of-table-layouts" title="Permalink to this heading"></a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For these tests, the table is divided into squares of 1 cm side length.</p>
+</div>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>Percentage of occupancy grid correctly analyzed (free/occupied):</strong></dt><dd><p>Computed by incrementing a counter for each square whose state (free or occupied) is correctly guessed by the reasoning component. A square is correctly guessed if the component identifies it as empty when it is truly empty, or identifies it as occupied when it is at least partially occupied on the real table. The final count is divided by the total number of squares on the table and multiplied by 100. This parameter quantifies the accuracy of the table analysis part of the component. Higher percentages indicate greater accuracy.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Percentage of occupancy grid correctly analyzed (part of free spot):</strong></dt><dd><p>Computed similarly to the above, but focusing on whether a square is part of a viable free spot for placement. A square is correctly guessed if the component identifies it as part of a free spot when it truly is, or identifies it as not part of a free spot when it is occupied or part of an area too small to be considered a free spot. The final count is divided by the total number of squares and multiplied by 100. This parameter assesses the accuracy in determining usable free spots, ensuring small unusable areas are ignored. Higher percentages indicate greater accuracy.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Percentage of optimal placement correctly determined:</strong></dt><dd><p>Computed assuming the free spots are correctly identified. This KPI measures the overlap between the optimal placement area determined by the component and the actual optimal area. The common area is calculated, divided by the area of the plate to be placed, and multiplied by 100. Higher percentages indicate a more effective ability to locate the best placement position.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="analysis-of-risk-determination">
+<h3>Analysis of Risk Determination<a class="headerlink" href="#analysis-of-risk-determination" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>Percentage of situations where risks have been guessed correctly:</strong></dt><dd><p>Evaluated across various scenarios with known optimal placements and objects on the table. The number of times the component correctly determines the risk associated with a placement is counted, divided by the total number of attempts, and multiplied by 100. This parameter assesses the component’s skill in accurately determining risks in realistic situations. Higher percentages indicate better risk assessment ability.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="analysis-of-message-transmission">
+<h3>Analysis of Message Transmission<a class="headerlink" href="#analysis-of-message-transmission" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>Percentage of situations where optimal placement messages were correctly sent:</strong></dt><dd><p>Computed by dividing the number of times the message containing the optimal placement was successfully sent by the total number of attempts to send it, multiplied by 100. This assesses the reliability of the component’s message transmission capability for placement instructions.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="orchestration_manager.html" class="btn btn-neutral float-left" title="Orchestration Manager" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="order_verification.html" class="btn btn-neutral float-right" title="Order Verification &amp; Error Handling" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GROUP-E.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

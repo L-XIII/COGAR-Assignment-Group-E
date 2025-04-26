@@ -1,0 +1,344 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orchestration Manager &mdash; COGAR Sushi resturant V1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=9ced427e"></script>
+      <script src="../_static/doctools.js?v=888ff710"></script>
+      <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reasoning About Food Placement" href="reasoning_food_placement.html" />
+    <link rel="prev" title="Architecture Overview" href="../architecture.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            COGAR Sushi resturant
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Orchestration Manager</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#behavioral-diagram">Behavioral Diagram</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#description">Description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#unit-test-kpis">Unit Test KPIs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#orders-handling">Orders Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#handling-of-tiago-availability-updates">Handling of TIAGo Availability Updates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#handling-of-tiago-position-updates">Handling of TIAGo Position Updates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#distance-computation">Distance Computation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#publication-of-orders-to-tiago-robots">Publication of Orders to TIAGo Robots</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analysis-of-message-transmission">Analysis of Message Transmission</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reasoning_food_placement.html">Reasoning About Food Placement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="order_verification.html">Order Verification &amp; Error Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Integration Testing</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">COGAR Sushi resturant</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Orchestration Manager</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/components/orchestration_manager.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="orchestration-manager">
+<h1>Orchestration Manager<a class="headerlink" href="#orchestration-manager" title="Permalink to this heading"></a></h1>
+<p>This component is responsible for managing tasks, resources (robots), and communication flow.</p>
+<section id="behavioral-diagram">
+<h2>Behavioral Diagram<a class="headerlink" href="#behavioral-diagram" title="Permalink to this heading"></a></h2>
+<figure class="align-center" id="id1">
+<img alt="Orchestration Manager Behavior Diagram" src="../_images/Orchestration_statemachine.drawio.png" />
+<figcaption>
+<p><span class="caption-text">Fig. 2:  Orchestration Manager state machine diagram</span><a class="headerlink" href="#id1" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p><strong>Why state machine diagram?</strong></p>
+<blockquote>
+<div><p>This system’s core function involves managing the state of tasks (Queued, Assigned, In Progress, Completed, Failed) and potentially the state of robots (Available, Busy, Charging). It reacts to events like new orders, task completions, and robot status updates. A State Machine diagram is ideal for visualizing these states, transitions, and the events that trigger them.</p>
+</div></blockquote>
+<section id="description">
+<h3>Description<a class="headerlink" href="#description" title="Permalink to this heading"></a></h3>
+<p>This state machine diagram illustrates the behavior of the Orchestration Manager component. It handles incoming orders, robot status updates, and assigns tasks accordingly.</p>
+<p><strong>States:</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>Idle:</strong></dt><dd><ul>
+<li><p>This is the initial and default state.</p></li>
+<li><p><strong>Entry Action:</strong> <code class="docutils literal notranslate"><span class="pre">initialize_listeners()</span></code> (Sets up subscriptions to ROS topics like <code class="docutils literal notranslate"><span class="pre">/orders</span></code>, <code class="docutils literal notranslate"><span class="pre">/availability</span></code>, <code class="docutils literal notranslate"><span class="pre">/position</span></code>).</p></li>
+<li><p><strong>Do Action:</strong> <code class="docutils literal notranslate"><span class="pre">check_conditions()</span></code> (Potentially periodic internal checks).</p></li>
+<li><dl class="simple">
+<dt><strong>Transitions:</strong></dt><dd><ul>
+<li><p>Receives <code class="docutils literal notranslate"><span class="pre">newOrderReceived(msg)</span></code>: Stores the order via <code class="docutils literal notranslate"><span class="pre">order_storing(msg)</span></code> and remains in Idle.</p></li>
+<li><p>Receives <code class="docutils literal notranslate"><span class="pre">availabilityReceived(msg)</span></code>: Updates robot status via <code class="docutils literal notranslate"><span class="pre">manage_availability(msg)</span></code> and remains in Idle.</p></li>
+<li><p>Receives <code class="docutils literal notranslate"><span class="pre">positionReceived(msg)</span></code>: Updates robot position via <code class="docutils literal notranslate"><span class="pre">manage_position(msg)</span></code> and remains in Idle.</p></li>
+<li><p>Triggered by <code class="docutils literal notranslate"><span class="pre">timerTick</span></code>: Moves to <code class="docutils literal notranslate"><span class="pre">CheckingForTask</span></code> state.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>CheckingForTask:</strong></dt><dd><ul>
+<li><p><strong>Entry Action:</strong> <code class="docutils literal notranslate"><span class="pre">checkQueuesAndAvailability()</span></code> (Checks if there are pending orders in the queue and if any robots are available).</p></li>
+<li><dl class="simple">
+<dt><strong>Transitions:</strong></dt><dd><ul>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">orderQueueNotEmpty</span> <span class="pre">AND</span> <span class="pre">robotAvailable</span></code> is true: Transitions to the <code class="docutils literal notranslate"><span class="pre">Assigning</span> <span class="pre">task</span></code> composite state.</p></li>
+<li><p>Otherwise (<code class="docutils literal notranslate"><span class="pre">[else]</span></code> guard): Transitions back to <code class="docutils literal notranslate"><span class="pre">Idle</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Assigning task (Composite State):</strong></dt><dd><ul>
+<li><p>This state encapsulates the process of selecting a robot and sending it a command.</p></li>
+<li><p><strong>Initial Transition Action:</strong> <code class="docutils literal notranslate"><span class="pre">getOrderDetails()</span></code> (Retrieves details of the order to be assigned).</p></li>
+<li><dl class="simple">
+<dt><strong>Internal States:</strong></dt><dd><ul>
+<li><dl class="simple">
+<dt><strong>SelectingRobot:</strong></dt><dd><ul>
+<li><p><strong>Entry Action:</strong> <code class="docutils literal notranslate"><span class="pre">findNearestRobot()</span></code> (Identifies the most suitable available robot, likely based on proximity or other criteria).</p></li>
+<li><dl class="simple">
+<dt><strong>Transitions:</strong></dt><dd><ul>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">robot</span> <span class="pre">found</span></code>: Transitions to <code class="docutils literal notranslate"><span class="pre">SendingCommand</span></code>.</p></li>
+<li><p>Otherwise (<code class="docutils literal notranslate"><span class="pre">[else]</span></code> guard, no suitable robot found): Transitions back out of the composite state to <code class="docutils literal notranslate"><span class="pre">CheckingForTask</span></code> (Note: the diagram shows transition back to the choice pseudostate before Idle, implying it might re-evaluate immediately or go Idle if conditions changed).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>SendingCommand:</strong></dt><dd><ul>
+<li><p><strong>Entry Actions:</strong> <code class="docutils literal notranslate"><span class="pre">formatCommand()</span></code> (Prepares the command message in the required format) and <code class="docutils literal notranslate"><span class="pre">publishCommand()</span></code> (Sends the command to the selected robot via the <code class="docutils literal notranslate"><span class="pre">/order_TIAGo</span></code> topic).</p></li>
+<li><dl class="simple">
+<dt><strong>Transition:</strong></dt><dd><ul>
+<li><p>On <code class="docutils literal notranslate"><span class="pre">commandSent</span></code>: Transitions to the final state, indicating successful task assignment.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>HandlingFailure:</strong></dt><dd><ul>
+<li><p>Entered when an unrecoverable error occurs (transition not explicitly shown but implied).</p></li>
+<li><p><strong>Entry Actions:</strong> <code class="docutils literal notranslate"><span class="pre">logFailure()</span></code> (Records the error) and <code class="docutils literal notranslate"><span class="pre">notifyStaff()</span></code> (Alerts personnel).</p></li>
+<li><p><strong>Do Action:</strong> <code class="docutils literal notranslate"><span class="pre">attemptRecovery()</span></code> (Executes automated recovery procedures if possible).</p></li>
+<li><dl class="simple">
+<dt><strong>Transitions:</strong></dt><dd><ul>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">[Unrecoverable]</span></code>: Transitions to a final error state (X).</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">[RecoveryAttempted]</span></code>: Performs <code class="docutils literal notranslate"><span class="pre">cleanup()</span></code> actions and transitions back to <code class="docutils literal notranslate"><span class="pre">Idle</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Overall Flow:</strong></p>
+<p>The Orchestration Manager starts in the <code class="docutils literal notranslate"><span class="pre">Idle</span></code> state, listening for orders and robot updates. Periodically (on <code class="docutils literal notranslate"><span class="pre">timerTick</span></code>), it checks if there are tasks to assign (<code class="docutils literal notranslate"><span class="pre">CheckingForTask</span></code>). If an order exists and a robot is free, it enters the <code class="docutils literal notranslate"><span class="pre">Assigning</span> <span class="pre">task</span></code> process: it selects the best robot (<code class="docutils literal notranslate"><span class="pre">SelectingRobot</span></code>) and sends the command (<code class="docutils literal notranslate"><span class="pre">SendingCommand</span></code>). If successful, it returns towards the idle/checking loop. If any part fails irrecoverably, it enters <code class="docutils literal notranslate"><span class="pre">HandlingFailure</span></code> to log, notify, and potentially attempt recovery before either terminating or returning to <code class="docutils literal notranslate"><span class="pre">Idle</span></code>.</p>
+</section>
+</section>
+<section id="unit-test-kpis">
+<h2>Unit Test KPIs<a class="headerlink" href="#unit-test-kpis" title="Permalink to this heading"></a></h2>
+<section id="orders-handling">
+<h3>Orders Handling<a class="headerlink" href="#orders-handling" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>Percentage of orders successfully received:</strong></dt><dd><p>Computed by taking the ratio between the number of orders received by the Orchestration Manager and the number of orders sent by the Points of Sale, multiplied by 100. This verifies if the Orchestration Manager successfully receives all order messages published by the POS.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Percentage of incorrect orders successfully analyzed:</strong></dt><dd><p>Computed by taking the ratio between the number of incorrect orders correctly processed and the number of incorrect orders received, multiplied by 100. By deliberately sending incorrect orders, this parameter assesses the robustness of the Orchestration Manager’s order handling in case of unexpected errors.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Percentage of correct orders correctly analyzed:</strong></dt><dd><p>Computed by taking the ratio between the number of correct orders correctly processed and the number of correct orders received, multiplied by 100. This assesses how well the Orchestration Manager analyzes correct orders under nominal conditions.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="handling-of-tiago-availability-updates">
+<h3>Handling of TIAGo Availability Updates<a class="headerlink" href="#handling-of-tiago-availability-updates" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>Percentage of availability messages successfully received:</strong></dt><dd><p>Computed by taking the ratio between the number of availability messages received by the Orchestration Manager and the number sent by the TIAGo robots, multiplied by 100. This verifies if the Orchestration Manager successfully receives all availability messages published by the TIAGo robots.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Percentage of correct availability messages successfully analyzed:</strong></dt><dd><p>Computed by taking the ratio between the number of correct availability messages successfully analyzed and the number of correct availability messages received, multiplied by 100. This verifies if the statuses of the TIAGo robots are correctly processed under nominal conditions.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Percentage of incorrect availability messages generating an error message:</strong></dt><dd><p>Computed by taking the ratio between the number of incorrect availability messages that generate an error publication and the number of incorrect availability messages received, multiplied by 100. This verifies if the Orchestration Manager efficiently raises error messages when a TIAGo robot provides an invalid status.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="handling-of-tiago-position-updates">
+<h3>Handling of TIAGo Position Updates<a class="headerlink" href="#handling-of-tiago-position-updates" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>Percentage of position messages successfully received:</strong></dt><dd><p>Computed by taking the ratio between the number of position messages received by the Orchestration Manager and the number sent by the TIAGo robots, multiplied by 100. This verifies if the Orchestration Manager successfully receives all position messages published by the TIAGo robots.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Percentage of correct position messages successfully analyzed:</strong></dt><dd><p>Computed by taking the ratio between the number of correct position messages successfully analyzed and the number of correct position messages received, multiplied by 100. “Correct” means the position does not cause the robot model to intersect with walls or tables. This verifies if robot positions are correctly processed and updated under nominal conditions.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Percentage of incorrect position messages generating an error message:</strong></dt><dd><p>Computed by taking the ratio between the number of incorrect position messages generating an error publication and the number of incorrect position messages received, multiplied by 100. This verifies if the Orchestration Manager efficiently raises errors when a TIAGo robot reports a physically impossible position (e.g., intersecting with obstacles).</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="distance-computation">
+<h3>Distance Computation<a class="headerlink" href="#distance-computation" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>Percentage of distances computed correctly:</strong></dt><dd><p>Computed by taking the ratio of the number of correctly computed distances over the total number of distances computed, multiplied by 100. This verifies if the Orchestration Manager successfully computes distances between objects, essential for assigning orders to the optimal TIAGo robot.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="publication-of-orders-to-tiago-robots">
+<h3>Publication of Orders to TIAGo Robots<a class="headerlink" href="#publication-of-orders-to-tiago-robots" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>Idleness coefficient:</strong></dt><dd><p>Computed by taking the minimum of: (a) the number of TIAGo robots available at the end of a control loop, and (b) the number of orders remaining to be assigned. A lower value is better. A value greater than zero indicates inefficiency, as there are both available robots and unassigned orders.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="analysis-of-message-transmission">
+<h3>Analysis of Message Transmission<a class="headerlink" href="#analysis-of-message-transmission" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>Percentage of TIAGo order messages correctly sent:</strong></dt><dd><p>Computed by dividing the number of times order messages were correctly sent to TIAGo robots by the total number of attempts, multiplied by 100. This assesses the ability of the Orchestration Manager to reliably send orders to the robots.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Percentage of error messages correctly sent:</strong></dt><dd><p>Computed by dividing the number of times error messages were correctly sent by the total number of attempts, multiplied by 100. This assesses the ability of the Orchestration Manager to reliably send error messages to staff/monitoring systems.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../architecture.html" class="btn btn-neutral float-left" title="Architecture Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reasoning_food_placement.html" class="btn btn-neutral float-right" title="Reasoning About Food Placement" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, GROUP-E.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
