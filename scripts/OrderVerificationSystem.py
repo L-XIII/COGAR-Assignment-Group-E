@@ -24,6 +24,8 @@ class OrderVerificationSystem:
         dish (str): Current dish being handled
         speech_interface (SpeechInterface): Interface for verbal customer interaction
     """
+    _instance = None
+
     def __new__(cls, tiago_platform=None):
         """
         Create a singleton instance of OrderVerificationSystem.
