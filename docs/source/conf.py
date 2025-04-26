@@ -31,7 +31,7 @@ html_show_sourcelink = False
 
 html_context = {
   "display_github": True,
-  "github_user": "GROUP-E",
+  "github_user": "L-XIII",
   "github_repo": "COGAR-Assignment-Group-E",
   "conf_py_path": "/docs/source/",
 }
