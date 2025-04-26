@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Integration test launch for full system pytest script -->
+  <test test-name="integration_test" pkg="group_e" type="test_integration.py" time-limit="300">
+  <!-- test_integration.py will be executed by rostest -->
+  </test>
+</launch>
