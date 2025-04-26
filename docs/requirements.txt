@@ -1,0 +1,1 @@
+sphinx-rt-theme==1.3.0
