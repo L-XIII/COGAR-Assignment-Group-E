@@ -1,9 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import random
 import math
 import rospy
-from std_msgs.msg import String
 from geometry_msgs.msg import Point
 
 

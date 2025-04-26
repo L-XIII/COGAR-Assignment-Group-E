@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import math
 import random
-from std_msgs.msg import String, Float32, Bool
-from geometry_msgs.msg import Point, Vector3
+from std_msgs.msg import String, Float32
+from geometry_msgs.msg import Point
 
 
 class ForceSensor:

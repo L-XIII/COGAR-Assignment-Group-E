@@ -1,12 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Point
 
-from PerceptionSystem import PerceptionSystem
-from OrderVerificationSystem import OrderVerificationSystem
-from NavigationSystem import NavigationSystem
+try:
+    from scripts.PerceptionSystem import PerceptionSystem
+    from scripts.OrderVerificationSystem import OrderVerificationSystem
+    from scripts.NavigationSystem import NavigationSystem
+except ImportError:
+    from PerceptionSystem import PerceptionSystem
+    from OrderVerificationSystem import OrderVerificationSystem
+    from NavigationSystem import NavigationSystem
 
 
 class TIAGo():

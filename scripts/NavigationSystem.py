@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import random
 import math
 from std_msgs.msg import String, Float32
-from geometry_msgs.msg import Point, Twist, PoseStamped
+from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid, Path
 
 
