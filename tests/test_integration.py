@@ -1,3 +1,4 @@
+import time
 import random
 import rospy
 import pytest
@@ -9,22 +10,22 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+'''Integration Test Suite for COGAR-Assignment-Group-E
+This module contains end-to-end integration tests covering interactions
+between all major subsystems: POS, OrchestrationManager, TIAGo,
+NavigationSystem, PerceptionSystem, ReasoningSystem,
+ManipulationSystem, OrderVerificationSystem, SpeechInterface.'''
+
 # Import core components for integration testing
 from scripts.ManipulationSystem import ManipulationSystem
 from scripts.NavigationSystem import NavigationSystem
 from scripts.OrchestrationManager import OrchestrationManager
 from scripts.OrderVerificationSystem import OrderVerificationSystem
-from scripts.PerceptionSystem import bernoulli_proba, PerceptionSystem
 from scripts.PointOfSale import POS as POSModule
 from scripts.Reasoning import ReasoningSystem, ReasoningController
 from scripts.SpeechInterface import SpeechInterface
 from scripts.TIAGo import TIAGo
 
-
-
-# Integration Test Suite for COGAR-Assignment-Group-E
-# This module validates interaction between components across the system
-# Including: POS, OrchestrationManager, TIAGo, Navigation, Perception, Reasoning, Manipulation
 
 
 # Integration Test: POS publishes orders and OrchestrationManager stores them correctly
@@ -465,6 +466,129 @@ def test_reasoning_manipulation_integration():
     success = ms.execute_manipulation([target[0], target[1], 0.7])
     assert success, "ManipulationSystem failed to complete the manipulation"
     assert ms.manipulation_supervisor.manipulation_status == 'completed', "ManipulationSupervisor should report completed"
+
+
+# Integration Test: End-to-End Service Workflow with KPI measurement
+def test_end_to_end_service_workflow():
+    """
+    End-to-end test of the full service workflow from POS to TIAGo operation.
+    Measures multiple KPIs for validation.
+    """
+    # Skip ROS initialization and delay to speed up testing
+    rospy.init_node = lambda *args, **kwargs: None
+    rospy.sleep     = lambda t: None
+
+    # Initialize OrchestrationManager and clear all state
+    om = OrchestrationManager()
+    om.orderQueue.clear()
+    om.error_messages.clear()
+    om.dictTIAGoAvailable.clear()
+    om.dictTIAGoPosition.clear()
+
+    # Initialize counters for orders and KPI tracking
+    orders_sent = 0
+    orders_received = 0
+    orders_processed = 0
+
+    # Hook order_storing to count received and processed orders
+    orig_store = om.order_storing
+    def counting_order_storing(msg):
+        nonlocal orders_received, orders_processed
+        orders_received += 1
+        result = orig_store(msg)
+        # Increment processed counter if order processed successfully
+        orders_processed += 1
+        return result
+    om.order_storing = counting_order_storing
+
+    # Setup TIAGo instance and redirect updates to OrchestrationManager
+    tiago = TIAGo()
+    avail_sent = 0
+    pos_sent   = 0
+    def count_avail(data):
+        nonlocal avail_sent
+        avail_sent += 1
+        return om.manage_availability(String(data=data))
+    def count_pos(msg):
+        nonlocal pos_sent
+        pos_sent += 1
+        return om.manage_position(msg)
+
+    tiago.publisher_availability = type('',(),{'publish':lambda self,d: count_avail(d)})()
+    tiago.publisher_position     = type('',(),{'publish':lambda self,m: count_pos(m)})()
+    tiago.publisher_clearing_order = type('',(),{'publish':lambda self,d: None})()
+
+    # Start timing the workflow execution
+    start = time.time()
+
+    # Emit one order from POS to OrchestrationManager
+    class DummyPOS(POSModule):
+        def __init__(self):
+            super().__init__()
+            self.publisher = type('',(),{
+                'publish': lambda self,raw: om.order_storing(String(data=raw))
+            })()
+    pos = DummyPOS()
+    # Force emission of only one order
+    with patch.object(random,'randint',return_value=1):
+        orders_sent += 1
+        pos.order_emission(nb_loops=0)
+
+    # Publish TIAGo availability and position to OM
+    tiago.send_availability()
+    tiago.send_position()
+
+    # Assign the order to TIAGo
+    om.publisher_order = type('',(),{
+        'publish': lambda self, msg: tiago.manage_order_request(String(data=msg))
+    })()
+    om.assign_order()
+
+    # Force all TIAGo service steps to succeed
+    tiago.perception_system.perception = lambda: True
+    tiago.navigation_system.navigate_to = lambda loc: True
+    tiago.order_verificatiion_system.verify_delivery_client = lambda: (False,None)
+
+    # Loop until TIAGo returns to available state
+    while tiago.status != 'available':
+        tiago.operation()
+
+    elapsed = time.time() - start
+
+    # Evaluate KPIs
+    # 1. Workflow latency
+    assert elapsed <= 5.0, f"Workflow too slow: {elapsed:.2f}s"
+
+    # 2. POS to OM order delivery rate
+    assert orders_received == orders_sent == 1
+
+    # 3. Correct order processing rate
+    assert orders_processed == orders_received
+
+    # 4. Availability update delivery and processing rate
+    assert len(om.dictTIAGoAvailable) == 1, f"Expected 1 TIAGo in availability dict, got {len(om.dictTIAGoAvailable)}"
+    assert avail_sent >= 1,                 f"Expected at least 1 availability publish, got {avail_sent}"
+
+    # 5. Position update delivery and processing rate
+    assert len(om.dictTIAGoPosition) == 1, f"Expected 1 position entry, got {len(om.dictTIAGoPosition)}"
+    assert pos_sent >= 1,                     f"Expected at least 1 position publish, got {pos_sent}"
+
+    # 6. Distance computation correctness
+    # Prepare dummy robot position at (3,4) for robot ID 1
+    om.dictTIAGoPosition[1] = [3, 4]
+    d = om.compute_distance(1)
+    assert abs(d - 5.0) < 1e-6
+
+    # 7. Idle-coefficient: no TIAGo idle while orders remain
+    idle_coef = min(
+        sum(1 for st in om.dictTIAGoAvailable.values() if st=='available'),
+        len(om.orderQueue)
+    )
+    assert idle_coef == 0
+
+    # Final state assertions
+    assert tiago.status == 'available'
+    assert not om.orderQueue
 
 
 
