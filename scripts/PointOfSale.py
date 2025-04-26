@@ -2,7 +2,6 @@
 
 import rospy
 import random
-import time
 from std_msgs.msg import String
 
 

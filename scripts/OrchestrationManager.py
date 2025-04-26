@@ -3,16 +3,12 @@
 # Standard libraries
 import math
 import time 
-import random
 import rospy
 
 # ROS message types
 from std_msgs.msg import String
 from geometry_msgs.msg import Point
 
-# Local imports
-import PointOfSale
-import TIAGo
 
 
 # Global assumptions

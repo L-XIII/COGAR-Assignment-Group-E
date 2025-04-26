@@ -4,7 +4,7 @@ import rospy
 import math
 import random
 from std_msgs.msg import String, Float32, Bool
-from geometry_msgs.msg import Point, Vector3
+from geometry_msgs.msg import Point
 
 
 class ForceSensor:

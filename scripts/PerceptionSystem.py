@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import rospy
-import random
 import numpy.random as nrd
 
 
