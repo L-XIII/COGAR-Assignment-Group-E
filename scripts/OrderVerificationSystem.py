@@ -21,6 +21,20 @@ class OrderVerificationSystem:
         dish (str): Current dish being handled
         speech_interface (SpeechInterface): Interface for verbal customer interaction
     """
+    def __new__(cls, tiago_platform=None):
+        """
+        Create a singleton instance of OrderVerificationSystem.
+        
+        Args:
+            tiago_platform: Reference to the TIAGo robot instance
+            
+        Returns:
+            OrderVerificationSystem: The singleton instance
+        """
+        if cls._instance is None:
+            cls._instance = super(OrderVerificationSystem, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
 
     def __init__(self, tiago_platform):
         """
