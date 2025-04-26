@@ -33,5 +33,6 @@ html_context = {
   "display_github": True,
   "github_user": "L-XIII",
   "github_repo": "COGAR-Assignment-Group-E",
+  "github_version": "main",
   "conf_py_path": "/docs/source/",
 }
