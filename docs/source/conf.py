@@ -26,4 +26,12 @@ exclude_patterns = []
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
-html_css_files = ['custom.css',]
+
+html_show_sourcelink = False
+
+html_context = {
+  "display_github": True,
+  "github_user": "GROUP-E",
+  "github_repo": "COGAR-Assignment-Group-E",
+  "conf_py_path": "/docs/source/",
+}
