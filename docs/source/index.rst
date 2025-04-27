@@ -11,7 +11,7 @@ Welcome to COGAR Sushi resturant's documentation!
    :caption: Contents:
    
    
-   
+   contributors
    architecture
    components/orchestration_manager
    components/reasoning_food_placement
