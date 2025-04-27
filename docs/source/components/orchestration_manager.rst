@@ -13,6 +13,8 @@ Behavioral Diagram
 .. figure:: /_static/diagrams/Orchestration_statemachine.drawio.png
    :alt: Orchestration Manager Behavior Diagram
    :align: center
+   :target: https://raw.githubusercontent.com/L-XIII/COGAR-Assignment-Group-E/refs/heads/main/docs/source/_static/diagrams/Orchestration_statemachine.drawio.png
+   :width: 1500px
 
    Fig. 2:  Orchestration Manager state machine diagram
 
