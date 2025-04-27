@@ -11,6 +11,8 @@ Behavioral Diagram
 .. figure:: /_static/diagrams/OrderVerificationSequence.png
    :alt: Verification Component Behavior Diagram
    :align: center
+   :target: https://raw.githubusercontent.com/L-XIII/COGAR-Assignment-Group-E/refs/heads/main/docs/source/_static/diagrams/OrderVerificationSequence.png
+   :width: 1500px
 
    Fig. 4:  Order Verification system sequence diagram.
 
