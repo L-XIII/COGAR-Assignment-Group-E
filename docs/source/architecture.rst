@@ -9,6 +9,8 @@ Component Diagram
 .. figure:: /_static/diagrams/Component_diagram_E.png
    :alt: System Component Diagram
    :align: center
+   :target: https://github.com/GROUP-E/COGAR-Assignment-Group-E/blob/main/docs/source/_static/diagrams/Component_diagram_E.png
+   :width: 1500px
 
    Fig. 1: Component diagram of the Sushi Resturant
 
