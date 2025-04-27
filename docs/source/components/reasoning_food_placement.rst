@@ -10,6 +10,8 @@ Behavioral Diagram
 .. figure:: /_static/diagrams/ReasoningAboutFoodPlacement.png
    :alt: Reasoning Component Behavior Diagram
    :align: center
+   :target: https://raw.githubusercontent.com/L-XIII/COGAR-Assignment-Group-E/refs/heads/main/docs/source/_static/diagrams/ReasoningAboutFoodPlacement.png
+   :width: 1500px
 
    Fig. 3:  Reasoning_food_placement activity diagram.
 
